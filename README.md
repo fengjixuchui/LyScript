@@ -10,7 +10,11 @@
 
   <br>
   
-[![Build status](https://cdn.lyshark.com/archive/LyScript/build.svg)](https://github.com/lyshark/LyScript) [![Open Source Helpers](https://cdn.lyshark.com/archive/LyScript/users.svg)](https://github.com/lyshark/LyScript) [![Crowdin](https://cdn.lyshark.com/archive/LyScript/email.svg)](mailto:me@lyshark.com) [![Download x64dbg](https://cdn.lyshark.com/archive/LyScript/x64dbg.svg)](https://sourceforge.net/projects/x64dbg/files/latest/download)
+[![Build status](https://cdn.lyshark.com/archive/LyScript/build.svg)](https://github.com/lyshark/LyScript) [![Open Source Helpers](https://cdn.lyshark.com/archive/LyScript/users.svg)](https://github.com/lyshark/LyScript) [![Crowdin](https://cdn.lyshark.com/archive/LyScript/email.svg)](mailto:me@lyshark.com) [![Download x64dbg](https://cdn.lyshark.com/archive/LyScript/x64dbg.svg)](https://github.com/lyshark/LyScript/releases/tag/LyScript) [![OSCS Status](https://www.oscs1024.com/platform/badge/lyshark/LyScript.svg?size=small)](https://www.oscs1024.com/project/lyshark/LyScript?ref=badge_small)
+
+
+[![OSCS Status](https://www.oscs1024.com/platform/badge/lyshark/LyScript.svg?size=large)](https://www.oscs1024.com/project/lyshark/LyScript?ref=badge_large)
+
 
 <br><br>
 一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现了远程动态调试，解决了逆向工作者分析漏洞，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，提高分析效率，实现自动化分析代码。
@@ -58,20 +62,6 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
-<br>
-
-- 插件函数分类:
-  - 寄存器类
-  - 调试类
-  - 模块类
-  - 内存类
-  - 堆栈类
-  - 进程线程类
-  - 反汇编类
-  - 其他通用类
-  - 扩展Script模块 (LyScriptTools)
-  - 通用案例总结
-
 <br><br>
 
 ### 寄存器类
