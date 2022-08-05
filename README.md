@@ -15,7 +15,7 @@
 [![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
-一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现了远程动态调试，解决了逆向工作者分析漏洞，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，提高分析效率，实现自动化分析代码。
+一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现了远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找代码片段原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，提高分析效率，实现自动化分析代码。
   
 </div>
 <br>
@@ -1109,82 +1109,87 @@ if __name__ == "__main__":
 
 ### 扩展Script模块
 
-LyScriptTools模块是一个x64dbg的扩展包，该模块主要针对内置Script脚本命令的类版封装，使得用户可以方便的调用x64dbg中的内置脚本命令，该封装原理是利用了LyScript模块中的`run_command_exec()`命令实现的，如下所有的命令封装都是围绕这个API函数进行的。
+LyScriptTools 模块是LyScript插件的扩展包，该模块主要针对标准过程化函数进行二次封装，目前LyScriptTools脚本扩展包分为两部分，第一部分是纯脚本模块，用户可以方便的调用x64dbg中的内置脚本命令，该封装原理是利用了LyScript模块中的`run_command_exec()`命令实现，第二部分则是对标准库的二次类版封装，其目的是增加功能并实现面向对象，运用对象化编程用户可以更精准的控制调试器行为。
 
-该插件需要在安装有`LyScript32/64`包之上再安装一个`LyScriptTools32/64`扩展包，该包已经提交到pypi官方仓库。
+该插件需要在安装有`LyScript`基础包之上，再安装`LyScriptTools`扩展插件包。
 
  - 安装只需要执行 `pip install LyScriptTools32` 或者 `pip install LyScriptTools64`
 
-<br>
+#### LyScriptTools 纯脚本模块
 
-<b>通用函数功能参考自：</b><a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a>
+纯脚本模块全部功能实现都是调用的x64dbg命令行，此种方式效率最低执行慢且当前只能回传一条整数类型的参数，建议尽量少使用此类模块实现功能。
 
-<br>
+函数功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 博客
 
 插件目前分为四部分，其中`LyScriptModule`是针对模块操作的封装，`LyScriptMemory`是内存封装，`LyScriptDisassemble`是反汇编封装，`LyScriptOther`是一些杂类。
 
 <b>from LyScriptTools32 import LyScriptModule</b>
 
- - mod.party(addr) ---> 获取模块的模式编号, addr = 0则是用户模块,1则是系统模块
- - mod.base(addr)  --->  获取模块基址
- - mod.size(addr)  --->  返回模块大小
- - mod.hash(addr)  --->  返回模块hash
- - mod.entry(addr) --->  返回模块入口
- - mod.system(addr)--->  如果addr是系统模块则为true否则则是false
- - mod.user(addr)  --->  如果是用户模块则返回true 否则为false
- - mod.main()      --->  返回主模块基地址
- - mod.rva(addr)   --->  如果addr不在模块则返回0,否则返回 addr所位于模块的 RVA偏移
- - mod.offset(addr)--->  获取地址所对应的文件偏移量,如果不在模块则返回0
- - mod.isexport(addr) ---> 判断该地址是否是从模块导出的函数,true是 false则不是
+|  类内函数名   | 函数作用  |
+|  ----  | ----  |
+| mod.party(addr) | 获取模块的模式编号, addr = 0则是用户模块,1则是系统模块 |
+| mod.base(addr) | 获取模块基址 |
+| mod.size(addr) | 返回模块大小 |
+| mod.hash(addr) | 返回模块hash |
+| mod.entry(addr) | 返回模块入口 |
+| mod.system(addr) | 如果addr是系统模块则为true否则则是false |
+| mod.user(addr) | 如果是用户模块则返回true 否则为false |
+| mod.main() | 返回主模块基地址 |
+| mod.rva(addr) | 如果addr不在模块则返回0,否则返回addr所位于模块的RVA偏移 |
+| mod.offset(addr) | 获取地址所对应的文件偏移量,如果不在模块则返回0 |
+| mod.isexport(addr) | 判断该地址是否是从模块导出的函数 |
 
 <b>from LyScriptTools32 import LyScriptMemory</b>
 
- - mem.valid(addr) 判断addr是否有效,有效则返回True
- - mem.base(addr)  或者当前addr的基址
- - mem.size(addr)  获取当前addr内存的大小
- - mem.iscode(addr) 判断当前 addr是否是可执行页面,成功返回TRUE
- - mem.decodepointer(ptr) 解密指针,相当于调用了API. DecodePointer ptr
- - ReadByte(addr / reg); 从addr或者寄存器中读取一个字节内存并且返回
- - Byte(addr) byte(addr)  同上
- - ReadWord(addr)  Word(addr) word(addr) 同上 读取两个字节
- - ReadDDword(addr) Dword(addr) dword(addr) 同上 读取四个字节
- - ReadQword(addr) Qword(addr) qword(addr) 同上 读取8个字节,但是只能是64位程序方可使用
- - ReadPtr(addr) 从地址中读取指针(4/8字节)并返回读取的指针值
- - ReadPointer(addr) ptr(addr) Pointer(addr) pointer(addr) 都同上
- - ptr(mod.main()) --> 00905A4D
- - byte(mod.main()) --> 0x0000004D
+|  类内函数名   | 函数作用  |
+|  ----  | ----  |
+| mem.valid(addr) | 判断addr是否有效,有效则返回True |
+| mem.base(addr) | 或者当前addr的基址 |
+| mem.size(addr) | 获取当前addr内存的大小 |
+| mem.iscode(addr) | 判断当前 addr是否是可执行页面,成功返回TRUE |
+| mem.decodepointer(ptr) | 解密指针,相当于调用了DecodePointer ptr |
+| ReadByte(addr/eg)| 从addr或者寄存器中读取一个字节内存并且返回 |
+| Byte(addr) | 从addr或者寄存器中读取一个字节内存并且返回 |
+| ReadWord(addr) | 读取两个字节 |
+| ReadDDword(addr) | 读取四个字节 |
+| ReadQword(addr) | 读取8个字节,但是只能是64位程序方可使用 |
+| ReadPtr(addr) | 从地址中读取指针(4/8字节)并返回读取的指针值 |
+| ReadPointer(addr) | 从地址中读取指针(4/8字节)并返回读取的指针值 |
 
 <b>from LyScriptTools32 import LyScriptDisassemble</b>
 
- - dis.len(addr)      获取addr处的指令长度。
- - dis.iscond(addr)   判断当前addr位置是否是条件指令(比如jxx) 返回值: 是的话True 否则False
- - dis.isbranch(addr) 判断当前地址是否是分支指令   返回值: 同上
- - dis.isret(addr)    判断是否是ret指令          返回值: 同上  
- - dis.iscall(addr)   判断是否是call指令         返回值: 同上  
- - dis.ismem(addr)    判断是否是内存操作数        返回值: 同上
- - dis.isnop(addr)    判断是否是nop             返回值: 同上
- - dis.isunusual(addr)判断当前地址是否指示为异常地址 返回值: 同上
- - dis.branchdest(addr)：将指令的分支目标位于（如果按 Enter 键，它将遵循什么）。addr
- - dis.branchexec(addr)：如果 分支 at 要执行，则为 true。addr
- - dis.imm(addr)       获取当前指令位置的立即数(这一行指令中出现的立即数)
- - dis.brtrue(addr)：指令在 的分支目标。addr
- - dis.brfalse(addr)：下一条指令的地址（如果指令 at 是条件分支）。addr
- - dis.next(addr)：    获取addr的下一条地址
- - dis.prev(addr)：    获取addr上一条低地址
- - dis.iscallsystem(addr) 判断当前指令是否是系统模块指令
+|  类内函数名   | 函数作用  |
+|  ----  | ----  |
+| dis.len(addr) | 获取addr处的指令长度 |
+| dis.iscond(addr) | 判断当前addr位置是否是条件指令 |
+| dis.isbranch(addr) | 判断当前地址是否是分支指令 |
+| dis.isret(addr) | 判断是否是ret指令 |
+| dis.iscall(addr) | 判断是否是call指令 |
+| dis.ismem(addr) | 判断是否是内存操作数 |
+| dis.isnop(addr) | 判断是否是nop |
+| dis.isunusual(addr) | 判断当前地址是否指示为异常地址 |
+| dis.branchdest(addr) | 将指令的分支目标位于addr处 |
+| dis.branchexec(addr) | 如果分支要执行 |
+| dis.imm(addr) | 获取当前指令位置的立即数 |
+| dis.brtrue(addr) | 下一条指令的地址 |
+| dis.next(addr) | 获取addr的下一条地址 |
+| dis.prev(addr) | 获取addr上一条低地址 |
+| dis.iscallsystem(addr) | 判断当前指令是否是系统模块指令 |
 
 <b>from LyScriptTools32 import LyScriptOther</b>
 
- - arg.get(index); 获取当前函数堆栈中的第几个参数,假设返回地址在堆栈上,并且我们在函数内部.
- - arg.set(index,value);设置的索引位置的值为
- - ex.firstchance()：最后一个异常是否为第一次机会异常。
- - ex.addr()：最后一个异常地址。例如，导致异常的指令的地址。
- - ex.code()：最后一个异常代码。
- - ex.flags()：最后一个异常标志。
- - ex.infocount()：上次异常信息计数（参数数）。
- - ex.info(index)：最后一个异常信息，如果索引超出范围，则为零。
+|  类内函数名   | 函数作用  |
+|  ----  | ----  |
+| arg.get(index) | 获取当前函数堆栈中的第index个参数 |
+| arg.set(index,value) | 设置的索引位置的值 |
+| ex.firstchance() | 最后一个异常是否为第一次机会异常 |
+| ex.addr() | 最后一个异常地址 |
+| ex.code() | 最后一个异常代码 |
+| ex.flags() | 最后一个异常标志 |
+| ex.infocount() | 上次异常信息计数 |
+| ex.info(index) | 最后一个异常信息 |
 
-如上是一些常用的函数封装，他们的调用方式如下面所示。
+如上是一些常用的脚本命令的封装，他们的调用方式如下面代码中所示。
 ```Python
 from LyScript32 import MyDebug
 from LyScriptTools32 import LyScriptModule
@@ -1212,7 +1217,133 @@ if __name__ == "__main__":
 
 当然如果你觉得上面这些通用函数不够用，或者没有补充全面，你完全可以调用任意类内的`ot.GetScriptValue()`函数自己去封装实现。
 
-<br><br>
+#### LyScriptTools 扩展类模块
+
+扩展类模块，其主要是二次封装LyScript插件实现的一些新功能，或者将特定功能组件拆分开形成的独立模块，此类模块可实现更加精细化的功能控制，在实际开发中推荐使用此种方式调用。
+
+<b>from LyScriptTools32 import Module</b>
+
+|  Module类内函数名   | 函数作用  |
+|  ----  | ----  |
+| get_local_full_path() | 得到程序自身完整路径 |
+| get_local_program_name() | 获得加载程序的文件名 |
+| get_local_program_size() | 得到被加载程序的大小 |
+| get_local_program_base() | 得到基地址 |
+| get_local_program_entry() | 得到入口地址 |
+| check_module_imported(module_name) | 验证程序是否导入了指定模块 |
+| get_name_from_module(address) | 根据基地址得到模块名 |
+| get_base_from_module(module_name) | 根据模块名得到基地址 |
+| get_oep_from_module(module_name) | 根据模块名得到模块OEP入口 |
+| get_all_module_information() | 得到所有模块信息 |
+| get_module_base(module_name) | 得到特定模块基地址 |
+| get_local_base() | 得到当前OEP位置处模块基地址 |
+| get_local_size() | 获取当前OEP位置长度 |
+| get_local_protect() | 获取当前OEP位置保护属性 |
+| get_module_from_function(module,function) | 获取指定模块中指定函数内存地址 |
+| get_base_from_address(address) | 根据传入地址得到模块首地址,开头4D 5A |
+| get_base_address() | 得到当前.text节基地址 |
+| get_base_from_name(module_name) | 根据名字得到模块基地址 |
+| get_oep_from_name(module_name) | 传入模块名得到OEP位置 |
+| get_oep_from_address(address) | 传入模块地址得到OEP位置 |
+| get_module_from_import(module_name)| 得到指定模块的导入表 |
+| get_import_inside_function(module_name,function_name) | 检查指定模块内是否存在特定导入函数 |
+| get_import_iatva(module_name,function_name) | 根据导入函数名得到函数iat_va地址 |
+| get_import_iatrva(module_name,function_name) | 根据导入函数名得到函数iat_rva地址 |
+| get_module_from_export(module_name) | 传入模块名,获取模块导出表 |
+| get_module_export_va(module_name,function_name) | 传入模块名以及导出函数名,得到va地址 |
+| get_module_export_rva(module_name,function_name) | 传入模块名以及导出函数,得到rva地址 |
+| get_local_section() | 得到程序节表信息 |
+| get_local_address_from_section(section_name) | 根据节名称得到地址 |
+| get_local_size_from_section(section_name) | 根据节名称得到节大小 |
+| get_local_section_from_address(address)| 根据地址得到节名称 |
+
+
+此处只提供一个演示案例，获取当前被调试进程详细参数，包括路径，名称，入口地址，基地址，长度等。
+```Python
+from LyScript32 import MyDebug
+from LyScriptTools32 import Module
+
+if __name__ == "__main__":
+    # 初始化
+    dbg = MyDebug()
+
+    # 连接到调试器
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 类定义,并传入调试器对象
+    module = Module(dbg)
+
+    # 得到当前被调试程序完整路径
+    full_path = module.get_local_full_path()
+    print("完整路径: {}".format(full_path))
+
+    # 得到进程名字
+    local_name = module.get_local_program_name()
+    print("调试名称: {}".format(local_name))
+  
+    # 验证是否导入了user32.dll
+    is_import = module.check_module_imported("user32.dll")
+    print("是否导入: {}".format(is_import))
+
+    # 根据模块名得到基地址
+    module_base = module.get_base_from_module("kernelbase.dll")
+    print("根据模块名得到基地址: {}".format(hex(module_base)))
+
+    dbg.close()
+```
+
+<b>from LyScriptTools32 import Disassemble</b>
+
+如下API定义中，地址后面带有0说明可以指定缺省值，缺省值默认取当前EIP位置。
+
+|  Disassemble 类内函数名   | 函数作用  |
+|  ----  | ----  |
+| is_call(address=0) | 是否是跳转指令 |
+| is_jmp(address=0) | 是否是jmp |
+| is_ret(address=0) | 是否是ret |
+| is_nop(address=0 )| 是否是nop |
+| is_cond(address=0)| 是否是条件跳转指令|
+| is_cmp(address=0) | 是否cmp比较指令 |
+| is_test(address=0 ) | 是否是test比较指令 |
+| is_(address,cond) | 自定义判断条件 |
+| get_assembly(address=0) | 得到指定位置汇编指令,不填写默认获取EIP位置处 |
+| get_opcode(address=0) | 得到指定位置机器码 |
+| get_disasm_operand_size(address=0) | 获取反汇编代码长度 |
+| assemble_code_size(assemble) | 计算用户传入汇编指令长度 |
+| get_assemble_code(assemble) | 用户传入汇编指令返回机器码 |
+| write_assemble(address,assemble) | 将汇编指令写出到指定内存位置 |
+| get_disasm_code(address,size) | 反汇编指定行数 |
+| get_disasm_one_code(address = 0)| 向下反汇编一行 |
+| get_disasm_operand_code(address=0) | 得到当前内存地址反汇编代码的操作数 |
+| get_disasm_next(eip) | 获取当前EIP指令的下一条指令 |
+| get_disasm_prev(eip) | 获取当前EIP指令的上一条指令 |
+
+我们来举一个使用案例，其实和模块调用原理是一样的，调用时先初始化，然后就可以使用内部的函数了。
+```Python
+from LyScript32 import MyDebug
+from LyScriptTools32 import Module
+from LyScriptTools32 import Disassemble
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 反汇编类
+    dasm = Disassemble(dbg)
+
+    ref = dasm.is_jmp()
+    print("是否是JMP: {}".format(ref))
+
+    dbg.close()
+```
+
+
+
+
+
+<br>
 
 ### 通用API例程 (官方案例)
 
@@ -2716,7 +2847,126 @@ if __name__ == "__main__":
     dbg.close()
 ```
 
+**第三方反汇编库应用:** 通过LyScript插件读取出内存中的机器码，然后交给`capstone`反汇编库执行，并将结果输出成字典格式。
+```Python
+#coding: utf-8
+import binascii,os,sys
+import pefile
+from capstone import *
+from LyScript32 import MyDebug
 
+# 得到内存反汇编代码
+def get_memory_disassembly(address,offset,len):
+    # 反汇编列表
+    dasm_memory_dict = []
+
+    # 内存列表
+    ref_memory_list = bytearray()
+
+    # 读取数据
+    for index in range(offset,len):
+        char = dbg.read_memory_byte(address + index)
+        ref_memory_list.append(char)
+
+    # 执行反汇编
+    md = Cs(CS_ARCH_X86,CS_MODE_32)
+    for item in md.disasm(ref_memory_list,0x1):
+        addr = int(pe_base) + item.address
+        dasm_memory_dict.append({"address": str(addr), "opcode": item.mnemonic + " " + item.op_str})
+    return dasm_memory_dict
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    pe_base = dbg.get_local_base()
+    pe_size = dbg.get_local_size()
+
+    print("模块基地址: {}".format(hex(pe_base)))
+    print("模块大小: {}".format(hex(pe_size)))
+
+    # 得到内存反汇编代码
+    dasm_memory_list = get_memory_disassembly(pe_base,0,pe_size)
+    print(dasm_memory_list)
+
+    dbg.close()
+```
+如果我们将磁盘文件也反汇编到一个列表内，然后对比两者就实现了一个简易版应用层钩子扫描器。
+```Python
+#coding: utf-8
+import binascii,os,sys
+import pefile
+from capstone import *
+from LyScript32 import MyDebug
+
+# 得到内存反汇编代码
+def get_memory_disassembly(address,offset,len):
+    # 反汇编列表
+    dasm_memory_dict = []
+
+    # 内存列表
+    ref_memory_list = bytearray()
+
+    # 读取数据
+    for index in range(offset,len):
+        char = dbg.read_memory_byte(address + index)
+        ref_memory_list.append(char)
+
+    # 执行反汇编
+    md = Cs(CS_ARCH_X86,CS_MODE_32)
+    for item in md.disasm(ref_memory_list,0x1):
+        addr = int(pe_base) + item.address
+        dic = {"address": str(addr), "opcode": item.mnemonic + " " + item.op_str}
+        dasm_memory_dict.append(dic)
+    return dasm_memory_dict
+
+# 反汇编文件中的机器码
+def get_file_disassembly(path):
+    opcode_list = []
+    pe = pefile.PE(path)
+    ImageBase = pe.OPTIONAL_HEADER.ImageBase
+
+    for item in pe.sections:
+        if str(item.Name.decode('UTF-8').strip(b'\x00'.decode())) == ".text":
+            # print("虚拟地址: 0x%.8X 虚拟大小: 0x%.8X" %(item.VirtualAddress,item.Misc_VirtualSize))
+            VirtualAddress = item.VirtualAddress
+            VirtualSize = item.Misc_VirtualSize
+            ActualOffset = item.PointerToRawData
+    StartVA = ImageBase + VirtualAddress
+    StopVA = ImageBase + VirtualAddress + VirtualSize
+    with open(path,"rb") as fp:
+        fp.seek(ActualOffset)
+        HexCode = fp.read(VirtualSize)
+
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    for item in md.disasm(HexCode, 0):
+        addr = hex(int(StartVA) + item.address)
+        dic = {"address": str(addr) , "opcode": item.mnemonic + " " + item.op_str}
+        # print("{}".format(dic))
+        opcode_list.append(dic)
+    return opcode_list
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    pe_base = dbg.get_local_base()
+    pe_size = dbg.get_local_size()
+
+    print("模块基地址: {}".format(hex(pe_base)))
+    print("模块大小: {}".format(hex(pe_size)))
+
+    # 得到内存反汇编代码
+    dasm_memory_list = get_memory_disassembly(pe_base,0,pe_size)
+    dasm_file_list = get_file_disassembly("d://win32project1.exe")
+
+    # 循环对比内存与文件中的机器码
+    for index in range(0,len(dasm_file_list)):
+        if dasm_memory_list[index] != dasm_file_list[index]:
+            print("地址: {:8} --> 内存反汇编: {:32} --> 磁盘反汇编: {:32}".
+                  format(dasm_memory_list[index].get("address"),dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
+    dbg.close()
+```
 
 
 

@@ -10,7 +10,9 @@
 
   <br>
   
-[![Build status](https://cdn.lyshark.com/archive/LyScript/build.svg)](https://github.com/lyshark/LyScript) [![Open Source Helpers](https://cdn.lyshark.com/archive/LyScript/users.svg)](https://github.com/lyshark/LyScript) [![Crowdin](https://cdn.lyshark.com/archive/LyScript/email.svg)](mailto:me@lyshark.com) [![Download x64dbg](https://cdn.lyshark.com/archive/LyScript/x64dbg.svg)](https://sourceforge.net/projects/x64dbg/files/latest/download)
+[![Build status](https://cdn.lyshark.com/archive/LyScript/build.svg)](https://github.com/lyshark/LyScript) [![Open Source Helpers](https://cdn.lyshark.com/archive/LyScript/users.svg)](https://github.com/lyshark/LyScript) [![Crowdin](https://cdn.lyshark.com/archive/LyScript/email.svg)](mailto:me@lyshark.com) [![Download x64dbg](https://cdn.lyshark.com/archive/LyScript/x64dbg.svg)](https://github.com/lyshark/LyScript/releases/tag/LyScript) [![OSCS Status](https://www.oscs1024.com/platform/badge/lyshark/LyScript.svg?size=small)](https://www.oscs1024.com/project/lyshark/LyScript?ref=badge_small)
+
+[![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
 модуль автоматизированного управления X64dbg, управляемый Python X64dbg, обеспечивает удалённую динамическую отладку, устраняет пробелы в анализе обратного персонала, ищет фрагменты команд, оригинальные сценарии недостаточно сильны, благодаря сочетанию с Python использует гибкость синтаксиса Python и богатую базу данных третьей стороны, повышает эффективность анализа и обеспечивает автоматизацию аналитического кода. 
@@ -19,8 +21,7 @@
 <br>
 
  - установить пакет Python ：`pip install LyScript32` или  `pip install LyScript64`
- - 32битный модуль загрузки ：https://cdn.lyshark.com/software/LyScript32.zip
- - 64битный модуль загрузки ：https://cdn.lyshark.com/software/LyScript64.zip
+ - модуль загрузки：<a href="https://cdn.lyshark.com/software/LyScript32.zip">LyScript32 (32bit)</a> or <a href="https://cdn.lyshark.com/software/LyScript64.zip">LyScript64 (64bit)</a>
 
 после загрузки модуля, пожалуйста, скопируйте этот модуль в каталог plugins x64dbg, который будет загружен автоматически после запуска программы. 
 
@@ -52,3 +53,5 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
+
+русский язык не подходит 
