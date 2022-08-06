@@ -15,20 +15,21 @@
 [![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
-一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现了远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找代码片段原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，提高分析效率，实现自动化分析代码。
+一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
   
 </div>
 <br>
 
-python包请安装与插件一致的版本，在cmd命令行下执行pip 命令即可安装。
+Python 包请安装与插件一致的版本，在cmd命令行下执行pip命令即可安装，推荐两个包全部安装。
 
  - 安装标准包：`pip install LyScript32` 或者 `pip install LyScript64`
+ - 安装扩展包：`pip install LyScriptTools32` 或者 `pip install LyScriptTools64`
 
 其次您需要手动下载对应x64dbg版本的驱动文件，并放入指定目录下。
 
  - 插件下载：<a href="https://cdn.lyshark.com/software/LyScript32.zip">LyScript32 (32位插件)</a> 或者 <a href="https://cdn.lyshark.com/software/LyScript64.zip">LyScript64 (64位插件)</a>
 
-插件下载好以后，请将该插件复制到x64dbg目录下的plugins目录下，程序运行后会自动加载插件文件。
+插件下载好以后，请将该插件复制到x64dbg的plugins目录下，程序运行后会自动加载插件。
 
 ![](https://img2022.cnblogs.com/blog/1379525/202203/1379525-20220327190905044-1815692787.png)
 
@@ -60,7 +61,7 @@ if __name__ == "__main__":
 ```
 <br><br>
 
-### 寄存器类
+### 寄存器系列函数
 
 **get_register() 函数:** 该函数主要用于实现，对特定寄存器的获取操作，用户需传入需要获取的寄存器名字即可。
 
@@ -176,7 +177,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 调试类
+### 调试系列函数
 
 **set_debug() 函数:** 用于影响调试器，例如前进一次，后退一次，暂停调试，终止等。
 
@@ -367,7 +368,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 模块类
+### 模块系列函数
 
 **get_module_base() 函数:** 该函数可用于获取程序载入的指定一个模块的基地址。
 
@@ -585,7 +586,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 内存类
+### 内存系列函数
 
 **read_memory_() 系列函数:** 读内存系列函数，包括 ReadByte,ReadWord,ReadDword 三种格式，在64位下才支持Qword
 
@@ -752,7 +753,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 堆栈类
+### 堆栈系列函数
 
 **create_alloc() 函数：** 函数`CreateRemoteAlloc()`可在远程开辟一段堆空间，成功返回内存首地址。
 
@@ -849,7 +850,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 进程线程类
+### 进程线程系列函数
 
 **get_thread_list() 函数:** 该函数可输出当前进程所有在运行的线程信息。
 
@@ -925,7 +926,7 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 反汇编类
+### 反汇编系列函数
 
 **get_disasm_code() 函数:** 该函数主要用于对特定内存地址进行反汇编，传入两个参数。
 
@@ -1050,7 +1051,7 @@ if __name__ == "__main__":
 
 <br>
 
-### 其他通用类
+### 其他系列函数
 
 **set_comment_notes() 函数:** 给指定位置代码增加一段注释，如下演示在eip位置增加注释。
 
@@ -1107,47 +1108,39 @@ if __name__ == "__main__":
 ```
 <br>
 
-### 扩展Script模块
+### Script 脚本类
 
-LyScriptTools 模块是LyScript插件的扩展包，该模块主要针对标准过程化函数进行二次封装，目前LyScriptTools脚本扩展包分为两部分，第一部分是纯脚本模块，用户可以方便的调用x64dbg中的内置脚本命令，该封装原理是利用了LyScript模块中的`run_command_exec()`命令实现，第二部分则是对标准库的二次类版封装，其目的是增加功能并实现面向对象，运用对象化编程用户可以更精准的控制调试器行为。
+纯脚本类的功能实现都是调用的x64dbg命令，目前由于`run_command_exec()`命令无法返回参数，故通过中转eax寄存器实现了取值，目前只能取出整数类型的参数，此种获取方式效率极低且会影响目标进程eax寄存器的变化，作者建议尽量`不要使用`此类纯脚本执行方式完成功能。
 
-该插件需要在安装有`LyScript`基础包之上，再安装`LyScriptTools`扩展插件包。
+纯脚本模块函数功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 的博客
 
- - 安装只需要执行 `pip install LyScriptTools32` 或者 `pip install LyScriptTools64`
-
-#### LyScriptTools 纯脚本模块
-
-纯脚本模块全部功能实现都是调用的x64dbg命令行，此种方式效率最低执行慢且当前只能回传一条整数类型的参数，建议尽量少使用此类模块实现功能。
-
-函数功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 博客
-
-插件目前分为四部分，其中`LyScriptModule`是针对模块操作的封装，`LyScriptMemory`是内存封装，`LyScriptDisassemble`是反汇编封装，`LyScriptOther`是一些杂类。
+纯脚本模块分为四部分，其中`LyScriptModule`是针对模块操作的封装，`LyScriptMemory`是内存封装，`LyScriptDisassemble`是反汇编封装，`LyScriptOther`是不便于归类方法。
 
 <b>from LyScriptTools32 import LyScriptModule</b>
 
-|  类内函数名   | 函数作用  |
+|  LyScriptModule 类内函数名   | 函数作用  |
 |  ----  | ----  |
-| mod.party(addr) | 获取模块的模式编号, addr = 0则是用户模块,1则是系统模块 |
-| mod.base(addr) | 获取模块基址 |
-| mod.size(addr) | 返回模块大小 |
-| mod.hash(addr) | 返回模块hash |
-| mod.entry(addr) | 返回模块入口 |
-| mod.system(addr) | 如果addr是系统模块则为true否则则是false |
-| mod.user(addr) | 如果是用户模块则返回true 否则为false |
-| mod.main() | 返回主模块基地址 |
-| mod.rva(addr) | 如果addr不在模块则返回0,否则返回addr所位于模块的RVA偏移 |
-| mod.offset(addr) | 获取地址所对应的文件偏移量,如果不在模块则返回0 |
-| mod.isexport(addr) | 判断该地址是否是从模块导出的函数 |
+| party(addr) | 获取模块的模式编号, addr = 0则是用户模块,1则是系统模块 |
+| base(addr) | 获取模块基址 |
+| size(addr) | 返回模块大小 |
+| hash(addr) | 返回模块hash |
+| entry(addr) | 返回模块入口 |
+| system(addr) | 如果addr是系统模块则为true否则则是false |
+| user(addr) | 如果是用户模块则返回true 否则为false |
+| main() | 返回主模块基地址 |
+| rva(addr) | 如果addr不在模块则返回0,否则返回addr所位于模块的RVA偏移 |
+| offset(addr) | 获取地址所对应的文件偏移量,如果不在模块则返回0 |
+| isexport(addr) | 判断该地址是否是从模块导出的函数 |
 
 <b>from LyScriptTools32 import LyScriptMemory</b>
 
-|  类内函数名   | 函数作用  |
+|  LyScriptMemory 类内函数名   | 函数作用  |
 |  ----  | ----  |
-| mem.valid(addr) | 判断addr是否有效,有效则返回True |
-| mem.base(addr) | 或者当前addr的基址 |
-| mem.size(addr) | 获取当前addr内存的大小 |
-| mem.iscode(addr) | 判断当前 addr是否是可执行页面,成功返回TRUE |
-| mem.decodepointer(ptr) | 解密指针,相当于调用了DecodePointer ptr |
+| valid(addr) | 判断addr是否有效,有效则返回True |
+| base(addr) | 或者当前addr的基址 |
+| size(addr) | 获取当前addr内存的大小 |
+| iscode(addr) | 判断当前 addr是否是可执行页面,成功返回TRUE |
+| decodepointer(ptr) | 解密指针,相当于调用了DecodePointer ptr |
 | ReadByte(addr/eg)| 从addr或者寄存器中读取一个字节内存并且返回 |
 | Byte(addr) | 从addr或者寄存器中读取一个字节内存并且返回 |
 | ReadWord(addr) | 读取两个字节 |
@@ -1158,36 +1151,36 @@ LyScriptTools 模块是LyScript插件的扩展包，该模块主要针对标准�
 
 <b>from LyScriptTools32 import LyScriptDisassemble</b>
 
-|  类内函数名   | 函数作用  |
+|  LyScriptDisassemble 类内函数名   | 函数作用  |
 |  ----  | ----  |
-| dis.len(addr) | 获取addr处的指令长度 |
-| dis.iscond(addr) | 判断当前addr位置是否是条件指令 |
-| dis.isbranch(addr) | 判断当前地址是否是分支指令 |
-| dis.isret(addr) | 判断是否是ret指令 |
-| dis.iscall(addr) | 判断是否是call指令 |
-| dis.ismem(addr) | 判断是否是内存操作数 |
-| dis.isnop(addr) | 判断是否是nop |
-| dis.isunusual(addr) | 判断当前地址是否指示为异常地址 |
-| dis.branchdest(addr) | 将指令的分支目标位于addr处 |
-| dis.branchexec(addr) | 如果分支要执行 |
-| dis.imm(addr) | 获取当前指令位置的立即数 |
-| dis.brtrue(addr) | 下一条指令的地址 |
-| dis.next(addr) | 获取addr的下一条地址 |
-| dis.prev(addr) | 获取addr上一条低地址 |
-| dis.iscallsystem(addr) | 判断当前指令是否是系统模块指令 |
+| len(addr) | 获取addr处的指令长度 |
+| iscond(addr) | 判断当前addr位置是否是条件指令 |
+| isbranch(addr) | 判断当前地址是否是分支指令 |
+| isret(addr) | 判断是否是ret指令 |
+| iscall(addr) | 判断是否是call指令 |
+| ismem(addr) | 判断是否是内存操作数 |
+| isnop(addr) | 判断是否是nop |
+| isunusual(addr) | 判断当前地址是否指示为异常地址 |
+| branchdest(addr) | 将指令的分支目标位于addr处 |
+| branchexec(addr) | 如果分支要执行 |
+| imm(addr) | 获取当前指令位置的立即数 |
+| brtrue(addr) | 下一条指令的地址 |
+| next(addr) | 获取addr的下一条地址 |
+| prev(addr) | 获取addr上一条低地址 |
+| iscallsystem(addr) | 判断当前指令是否是系统模块指令 |
 
 <b>from LyScriptTools32 import LyScriptOther</b>
 
-|  类内函数名   | 函数作用  |
+|  LyScriptOther 类内函数名   | 函数作用  |
 |  ----  | ----  |
-| arg.get(index) | 获取当前函数堆栈中的第index个参数 |
-| arg.set(index,value) | 设置的索引位置的值 |
-| ex.firstchance() | 最后一个异常是否为第一次机会异常 |
-| ex.addr() | 最后一个异常地址 |
-| ex.code() | 最后一个异常代码 |
-| ex.flags() | 最后一个异常标志 |
-| ex.infocount() | 上次异常信息计数 |
-| ex.info(index) | 最后一个异常信息 |
+| get(index) | 获取当前函数堆栈中的第index个参数 |
+| set(index,value) | 设置的索引位置的值 |
+| firstchance() | 最后一个异常是否为第一次机会异常 |
+| addr() | 最后一个异常地址 |
+| code() | 最后一个异常代码 |
+| flags() | 最后一个异常标志 |
+| infocount() | 上次异常信息计数 |
+| info(index) | 最后一个异常信息 |
 
 如上是一些常用的脚本命令的封装，他们的调用方式如下面代码中所示。
 ```Python
@@ -1214,16 +1207,13 @@ if __name__ == "__main__":
     
     dbg.close()
 ```
+<br>
 
-当然如果你觉得上面这些通用函数不够用，或者没有补充全面，你完全可以调用任意类内的`ot.GetScriptValue()`函数自己去封装实现。
+### Module 模块类
 
-#### LyScriptTools 扩展类模块
+Module模块类的封装，提供了针对模块参数的精细化控制，对导入表，导出表，节表等具有更好的过滤效果。
 
-扩展类模块，其主要是二次封装LyScript插件实现的一些新功能，或者将特定功能组件拆分开形成的独立模块，此类模块可实现更加精细化的功能控制，在实际开发中推荐使用此种方式调用。
-
-<b>from LyScriptTools32 import Module</b>
-
-|  Module类内函数名   | 函数作用  |
+|  Module 类内函数名   | 函数作用  |
 |  ----  | ----  |
 | get_local_full_path() | 得到程序自身完整路径 |
 | get_local_program_name() | 获得加载程序的文件名 |
@@ -1256,7 +1246,6 @@ if __name__ == "__main__":
 | get_local_address_from_section(section_name) | 根据节名称得到地址 |
 | get_local_size_from_section(section_name) | 根据节名称得到节大小 |
 | get_local_section_from_address(address)| 根据地址得到节名称 |
-
 
 此处只提供一个演示案例，获取当前被调试进程详细参数，包括路径，名称，入口地址，基地址，长度等。
 ```Python
@@ -1292,10 +1281,11 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
+<br>
 
-<b>from LyScriptTools32 import Disassemble</b>
+### Disassemble 反汇编类
 
-如下API定义中，地址后面带有0说明可以指定缺省值，缺省值默认取当前EIP位置。
+Disassemble 反汇编类内的方法的实现都继承于LyScript是对该模块的二次封装，增加了一些新的API函数的让用户可以有更多选择，需要注意的是如下API定义中，地址后面带有0的说明其可以省略参数，缺省值默认取当前EIP位置。
 
 |  Disassemble 类内函数名   | 函数作用  |
 |  ----  | ----  |
@@ -1333,19 +1323,122 @@ if __name__ == "__main__":
     # 反汇编类
     dasm = Disassemble(dbg)
 
+    # 无参数使用
     ref = dasm.is_jmp()
     print("是否是JMP: {}".format(ref))
+
+    # 携带参数使用
+    eip = dbg.get_register("eip")
+    eip_flag = dasm.is_jmp(eip)
+    print("EIP位置: {}".format(eip_flag))
+
+    dbg.close()
+```
+<br>
+
+### DebugControl 调试控制类
+
+DebugControl 调试控制类主要用于控制x64dbg的行为，例如获取或设置寄存器组，执行单步命令等，此类内的方法也是最常用的。
+
+DebugControl 说明文档整理自：<a href="https://github.com/Softnessi">Softnessi</a>
+
+| DebugControl 类内函数名   | 函数作用 |
+|  ----  | ----  |
+| GetEAX() | 获取通用寄存器系列 |
+| SetEAX(decimal_value) | 设置特定寄存器中的值(十进制) |
+| GetZF() | 获取标志寄存器系列 |
+| SetZF(decimal_bool) | 设置标志寄存器的值(布尔型) |
+| Script_InitDebug(path) | 传入文件路径,载入被调试程序 |
+| Script_CloseDebug() | 终止当前被调试进程 |
+| Script_DetachDebug() | 让进程脱离当前调试器 |
+| Script_RunDebug() | 让进程运行起来 |
+| Script_ERun() | 释放锁并允许程序运行，忽略异常 |
+| Script_SeRun() | 释放锁并允许程序运行，跳过异常中断 |
+| Script_Pause() | 暂停调试器运行 |
+| Script_StepInto() | 步进 |
+| Script_EStepInfo() | 步进,跳过异常 |
+| Script_SeStepInto() | 步进,跳过中断 |
+| Script_StepOver() | 步过到结束 |
+| Script_StepOut() | 普通步过F8 |
+| Script_Skip() | 跳过执行 |
+| Script_Inc(register) | 递增寄存器 |
+| Script_Dec(register) | 递减寄存器 |
+| Script_Add(register,decimal_int) | 对寄存器进行add运算 |
+| Script_Sub(register,decimal_int) | 对寄存器进行sub运算 |
+| Script_Mul(register,decimal_int) | 对寄存器进行mul乘法 |
+| Script_Div(register,decimal_int) | 对寄存器进行div除法 |
+| Script_And(register,decimal_int) | 对寄存器进行and与运算 |
+| Script_Or(register,decimal_int) | 对寄存器进行or或运算 |
+| Script_Xor(register,decimal_int) | 对寄存器进行xor或运算 |
+| Script_Neg(register,decimal_int) | 对寄存器参数进行neg反转 |
+| Script_Rol(register,decimal_int) | 对寄存器进行rol循环左移 |
+| Script_Ror(register,decimal_int) | 对寄存器进行ror循环右移 |
+| Script_Shl(register,decimal_int) | 对寄存器进行shl逻辑左移 |
+| Script_Shr(register,decimal_int) | 对寄存器进行shr逻辑右移 |
+| Script_Sal(register,decimal_int) | 对寄存器进行sal算数左移 |
+| Script_Sar(register,decimal_int) | 对寄存器进行sar算数右移 |
+| Script_Not(register,decimal_int) | 对寄存器进行not按位取反 |
+| Script_Bswap(register,decimal_int) | 进行字节交换也就是反转 |
+| Script_Push(register_or_value) | 对寄存器入栈 |
+| Script_Pop(register_or_value) | 对寄存器弹出元素 |
+| Pause() | 内置API暂停 |
+| Run() | 内置API运行 |
+| StepIn() | 内置API步入 |
+| StepOut() | 内置API步过 |
+| StepOut() | 内置API到结束 |
+| Stop() | 内置API停止 |
+| Wait() | 内置API等待 |
+| IsDebug() | 内置API判断调试器是否在调试 |
+| IsRunning() | 内置API判断调试器是否在运行 |
+
+自动控制类主要功能如上表示，其中Script开头的API是调用的脚本命令实现，其他的是API实现，我们以批量自动载入程序为例，演示该类内函数是如何使用的。
+```Python
+import os
+import pefile
+import time
+from LyScript32 import MyDebug
+from LyScriptTools32 import Module
+from LyScriptTools32 import Disassemble
+from LyScriptTools32 import DebugControl
+
+# 得到特定目录下的所有文件,并返回列表
+def GetFullFilePaht(path):
+    ref = []
+    for root,dirs,files in os.walk(str(path)):
+        for index in range(0,len(files)):
+            ref.append(str(root + "/" + files[index]))
+    return ref
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 初始化调试控制器
+    debug = DebugControl(dbg)
+
+    # 得到特定目录下的所有文件
+    full_path = GetFullFilePaht("d://test/")
+
+    for i in range(0,len(full_path)):
+        debug.Script_InitDebug(str(full_path[i]))
+        time.sleep(0.3)
+        debug.Script_RunDebug()
+
+        time.sleep(0.3)
+        local_base = dbg.get_local_base()
+        print("当前调试进程: {} 基地址: {}".format(full_path[i],local_base))
+
+        time.sleep(0.3)
+        # 关闭调试
+        debug.Script_CloseDebug()
 
     dbg.close()
 ```
 
-
-
-
-
 <br>
 
-### 通用API例程 (官方案例)
+### 面向过程API例程 (官方案例)
 
 LyScript 模块中的通用案例，用于演示插件内置方法如何组合使用，用户可以自行研究学习API函数是如何灵活的调用的，并自己编写一些有用的案例。
 
@@ -1827,137 +1920,6 @@ if __name__ == "__main__":
     print(hex(ref))
     
     dbg.close()
-```
-
-**批量载入移除被调试进程:** 默认的LyScript插件没有批量载入功能，导致用户只能手动将被调试进程拖入到x64dbg中才可以调试，使用python模拟快捷键即可解决这个问题。
-```Python
-import win32api
-import win32gui, win32con
-import win32clipboard
-import re
-import time
-from LyScript32 import MyDebug
-
-class cWindow:
-    def __init__(self):
-        self._hwnd = None
-
-    def SetAsForegroundWindow(self):
-        win32gui.SetForegroundWindow(self._hwnd)
-
-    def Maximize(self):
-        # 最大化
-        win32gui.ShowWindow(self._hwnd, win32con.SW_MAXIMIZE)
-
-    def _window_enum_callback(self, hwnd, regex):
-        if self._hwnd is None and re.match(regex, str(win32gui.GetWindowText(hwnd))) is not None:
-            self._hwnd = hwnd
-
-    def find_window_regex(self, regex):
-        self._hwnd = None
-        win32gui.EnumWindows(self._window_enum_callback, regex)
-
-    def hide_always_on_top_windows(self):
-        win32gui.EnumWindows(self._window_enum_callback_hide, None)
-
-    def _window_enum_callback_hide(self, hwnd, unused):
-        if hwnd != self._hwnd:
-            if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOPMOST:
-                className = win32gui.GetClassName(hwnd)
-                if not (className == 'Button' or className == 'Shell_TrayWnd'):
-                    win32gui.ShowWindow(hwnd, win32con.SW_FORCEMINIMIZE)
-
-    def OpenFile(self,path):
-        # 按下F3
-        win32api.keybd_event(0x72, 0, 0, 0)
-        win32api.keybd_event(0x72, 0, win32con.KEYEVENTF_KEYUP, 0)
-
-        # 打开剪贴板
-        win32clipboard.OpenClipboard()
-        # 清空剪贴板
-        win32clipboard.EmptyClipboard()
-        # 设置剪贴板内容
-        win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, path)
-        # 获取剪贴板内容
-        date = win32clipboard.GetClipboardData()
-        print("[*] OpenFile = {}".format(date))
-        # 关闭剪贴板
-        win32clipboard.CloseClipboard()
-        time.sleep(0.2)
-
-        # 按下ctrl+v
-        win32api.keybd_event(0x11, 0, 0, 0)
-        win32api.keybd_event(0x56, 0, 0, 0)
-        win32api.keybd_event(0x56, 0, win32con.KEYEVENTF_KEYUP, 0)
-        win32api.keybd_event(0x11, 0, win32con.KEYEVENTF_KEYUP, 0)
-
-        # 按下回车
-        win32api.keybd_event(0x0D, 0, 0, 0)
-        win32api.keybd_event(0x0D, 0, win32con.KEYEVENTF_KEYUP, 0)
-
-    def deatch(self):
-        # 按下Ctrl+Alt+F2
-        win32api.keybd_event(0x11, 0, 0, 0)
-        win32api.keybd_event(0x12, 0, 0, 0)
-        win32api.keybd_event(0x71, 0, 0, 0)
-        win32api.keybd_event(0x11, 0, win32con.KEYEVENTF_KEYUP, 0)
-        win32api.keybd_event(0x12, 0, win32con.KEYEVENTF_KEYUP, 0)
-        win32api.keybd_event(0x71, 0, win32con.KEYEVENTF_KEYUP, 0)
-
-# 打开调试程序
-def OpenFile(path):
-    regex = ".*x32dbg.*"
-    cWindows = cWindow()
-    cWindows.find_window_regex(regex)
-    cWindows.SetAsForegroundWindow()
-    cWindows.SetAsForegroundWindow()
-    cWindows.OpenFile(path)
-
-# 关闭调试程序
-def DeatchFile():
-    regex = ".*x32dbg.*"
-    cWindows = cWindow()
-    cWindows.find_window_regex(regex)
-    cWindows.SetAsForegroundWindow()
-    cWindows.SetAsForegroundWindow()
-    cWindows.deatch()
-
-# 得到脚本返回值
-def GetScriptValue(dbg,script):
-    try:
-        ref = dbg.run_command_exec("push eax")
-        if ref != True:
-            return None
-        ref = dbg.run_command_exec(f"eax={script}")
-        if ref != True:
-            return None
-        reg = dbg.get_register("eax")
-        ref = dbg.run_command_exec("pop eax")
-        if ref != True:
-            return None
-        return reg
-    except Exception:
-        return None
-    return None
-
-if __name__ == "__main__":
-    dbg = MyDebug()
-    dbg.connect()
-
-    # 批量打开一个列表
-    for item in ["D:\Win32Project.exe","D:\Windows Tools\C32ASM\c32asm.exe"]:
-        OpenFile(item)
-        time.sleep(3)
-
-        for i in range(1,100):
-            dbg.set_debug("StepIn")
-            time.sleep(0.2)
-
-        eip = dbg.get_register("eip")
-        print("eip = > {}".format(hex(eip)))
-
-        time.sleep(3)
-        DeatchFile()
 ```
 
 **获取节表内存属性:** 默认情况下插件可以得到当前节表，但无法直接取到节表内存属性，如果需要得到某个节的内存属性，可以这样写。
@@ -2967,6 +2929,13 @@ if __name__ == "__main__":
                   format(dasm_memory_list[index].get("address"),dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
     dbg.close()
 ```
+
+<br>
+
+### 面向对象API例程 (官方案例)
+
+类版本封装案例，推荐使用的版本。
+
 
 
 
