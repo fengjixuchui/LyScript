@@ -15,19 +15,19 @@
 [![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
-一款 x64dbg 自动化控制插件，通过Python控制X64dbg，实现远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
+一款 x64dbg 自动化控制插件，通过Python控制x64dbg，实现远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
   
 </div>
 <br>
 
 Python 包请安装与插件一致的版本，在cmd命令行下执行pip命令即可安装，推荐两个包全部安装。
 
- - 安装标准包：`pip install LyScript32` 或者 `pip install LyScript64`
+ - 安装标准包：`pip install LyScript32==1.0.10` 或者 `pip install LyScript64==1.0.10`
  - 安装扩展包：`pip install LyScriptTools32` 或者 `pip install LyScriptTools64`
 
-其次您需要手动下载对应x64dbg版本的驱动文件，并放入指定目录下。
+其次您需要手动下载对应x64dbg版本的驱动文件，并放入指定的`plugins`目录下。
 
- - 插件下载：<a href="https://cdn.lyshark.com/software/LyScript32.zip">LyScript32 (32位插件)</a> 或者 <a href="https://cdn.lyshark.com/software/LyScript64.zip">LyScript64 (64位插件)</a>
+ - 插件下载：<a href="https://github.com/lyshark/LyScript/blob/master/plugins/LyScript32-1.0.7.zip">LyScript32 1.0.7 (32位插件)</a> 或者 <a href="https://github.com/lyshark/LyScript/blob/master/plugins/LyScript64-1.0.7.zip">LyScript64 1.0.7 (64位插件)</a>
 
 插件下载好以后，请将该插件复制到x64dbg的plugins目录下，程序运行后会自动加载插件。
 
@@ -37,7 +37,7 @@ Python 包请安装与插件一致的版本，在cmd命令行下执行pip命令�
 
 ![image](https://user-images.githubusercontent.com/52789403/161062658-0452fe0c-3e11-4df4-a83b-b026f74884d0.png)
 
-如果需要远程调试，则只需要在初始化`MyDebug()`类是传入对端IP地址即可，如果不填写参数则默认使用`127.0.0.1`地址，请确保对端放行了`6589`端口，否则无法连接。
+如果需要远程调试，则只需要在初始化`MyDebug()`类时传入对端IP地址即可，如果不填写参数则默认使用`127.0.0.1`地址，请确保对端放行了`6589`端口，否则无法连接。
 
 ![image](https://user-images.githubusercontent.com/52789403/161062393-df04aabb-2d70-4434-80b9-a46974bccf8a.png)
 
@@ -606,7 +606,6 @@ if __name__ == "__main__":
     dbg = MyDebug()
     connect_flag = dbg.connect()
 
-
     eip = dbg.get_register("eip")
 
     ref = dbg.read_memory_byte(eip)
@@ -755,7 +754,7 @@ if __name__ == "__main__":
 
 ### 堆栈系列函数
 
-**create_alloc() 函数：** 函数`CreateRemoteAlloc()`可在远程开辟一段堆空间，成功返回内存首地址。
+**create_alloc() 函数：** 函数`create_alloc()`可在远程开辟一段堆空间，成功返回内存首地址。
 
  - 参数1：开辟的堆长度（十进制）
 
@@ -1110,15 +1109,11 @@ if __name__ == "__main__":
 
 ### Script 脚本类
 
-纯脚本类的功能实现都是调用的x64dbg命令，目前由于`run_command_exec()`命令无法返回参数，故通过中转eax寄存器实现了取值，目前只能取出整数类型的参数，此种获取方式效率极低且会影响目标进程eax寄存器的变化，作者建议尽量`不要使用`此类纯脚本执行方式完成功能。
+纯脚本类的功能实现都是调用的x64dbg命令，目前由于`run_command_exec()`命令无法返回参数，故通过中转eax寄存器实现了取值，目前只能取出整数类型的参数。
 
 纯脚本模块函数功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 的博客
 
-纯脚本模块分为四部分，其中`LyScriptModule`是针对模块操作的封装，`LyScriptMemory`是内存封装，`LyScriptDisassemble`是反汇编封装，`LyScriptOther`是不便于归类方法。
-
-<b>from LyScriptTools32 import LyScriptModule</b>
-
-|  LyScriptModule 类内函数名   | 函数作用  |
+|  Script 类内函数名   | 函数作用  |
 |  ----  | ----  |
 | party(addr) | 获取模块的模式编号, addr = 0则是用户模块,1则是系统模块 |
 | base(addr) | 获取模块基址 |
@@ -1131,11 +1126,6 @@ if __name__ == "__main__":
 | rva(addr) | 如果addr不在模块则返回0,否则返回addr所位于模块的RVA偏移 |
 | offset(addr) | 获取地址所对应的文件偏移量,如果不在模块则返回0 |
 | isexport(addr) | 判断该地址是否是从模块导出的函数 |
-
-<b>from LyScriptTools32 import LyScriptMemory</b>
-
-|  LyScriptMemory 类内函数名   | 函数作用  |
-|  ----  | ----  |
 | valid(addr) | 判断addr是否有效,有效则返回True |
 | base(addr) | 或者当前addr的基址 |
 | size(addr) | 获取当前addr内存的大小 |
@@ -1148,11 +1138,6 @@ if __name__ == "__main__":
 | ReadQword(addr) | 读取8个字节,但是只能是64位程序方可使用 |
 | ReadPtr(addr) | 从地址中读取指针(4/8字节)并返回读取的指针值 |
 | ReadPointer(addr) | 从地址中读取指针(4/8字节)并返回读取的指针值 |
-
-<b>from LyScriptTools32 import LyScriptDisassemble</b>
-
-|  LyScriptDisassemble 类内函数名   | 函数作用  |
-|  ----  | ----  |
 | len(addr) | 获取addr处的指令长度 |
 | iscond(addr) | 判断当前addr位置是否是条件指令 |
 | isbranch(addr) | 判断当前地址是否是分支指令 |
@@ -1168,11 +1153,6 @@ if __name__ == "__main__":
 | next(addr) | 获取addr的下一条地址 |
 | prev(addr) | 获取addr上一条低地址 |
 | iscallsystem(addr) | 判断当前指令是否是系统模块指令 |
-
-<b>from LyScriptTools32 import LyScriptOther</b>
-
-|  LyScriptOther 类内函数名   | 函数作用  |
-|  ----  | ----  |
 | get(index) | 获取当前函数堆栈中的第index个参数 |
 | set(index,value) | 设置的索引位置的值 |
 | firstchance() | 最后一个异常是否为第一次机会异常 |
@@ -1185,33 +1165,113 @@ if __name__ == "__main__":
 如上是一些常用的脚本命令的封装，他们的调用方式如下面代码中所示。
 ```Python
 from LyScript32 import MyDebug
-from LyScriptTools32 import LyScriptModule
-from LyScriptTools32 import LyScriptMemory
-from LyScriptTools32 import LyScriptDisassemble
-from LyScriptTools32 import LyScriptOther
+from LyScriptTools32 import DebugControl
+from LyScriptTools32 import Script
+
+# 有符号整数转无符号数
+def long_to_ulong(inter, is_64=False):
+    if is_64 == False:
+        return inter & ((1 << 32) - 1)
+    else:
+        return inter & ((1 << 64) - 1)
+
+# 无符号整数转有符号数
+def ulong_to_long(inter, is_64=False):
+    if is_64 == False:
+        return (inter & ((1 << 31) - 1)) - (inter & (1 << 31))
+    else:
+        return (inter & ((1 << 63) - 1)) - (inter & (1 << 63))
 
 if __name__ == "__main__":
     dbg = MyDebug()
-    dbg.connect()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
 
-    # 模块类
-    mod = LyScriptModule()
+    # 定义堆栈类
+    control = DebugControl(dbg)
+    script = Script(dbg)
 
-    party = mod.base(dbg,"0x4c55ac")
-    print("party: {}".format(hex(party)))
+    # 得到EIP
+    eip = control.get_eip()
 
-    # 读取参数时应注意转为十六进制
-    eip = dbg.get_register("eip")
-    ret = mod.base(dbg, "{}".format(hex(eip)))
-    print("基地址: {}".format(hex(ret)))
-    
+    size = script.size(eip)
+    print("当前模块大小: {}".format(hex(size)))
+
+    entry = script.entry(eip)
+    print("当前模块入口: {}".format(hex(entry)))
+
+    # 得到hash值,默认有符号需要转换
+    hash = script.hash(eip)
+    print("有符号hash值: {}".format(hash))
+
+    hash = long_to_ulong(script.hash(eip))
+    print("无符号hash值: {}".format(hex(hash)))
+
+    dbg.close()
+```
+<br>
+
+### Stack 堆栈类
+
+Stack 类是通过二次封装stack堆栈操作API函数得到的，并在此基础上增加了全新的调用函数。
+
+|  Stack 类内函数名   | 函数作用  |
+|  ----  | ----  |
+| create_alloc(decimal_size=1024) | 开辟堆,传入长度,默认1024字节 |
+| delete_alloc(decimal_address=0) | 销毁一个远程堆 |
+| push_stack(decimal_value=0) | 将传入参数入栈 |
+| pop_stack() | 从栈顶弹出元素,默认检查栈顶,可传入参数 |
+| peek_stack(decimal_index=0) | 检查指定位置栈针中的地址,返回一个地址 |
+| peek_stack_list(decimal_count=0) | 检查指定位置处前index个栈针中的地址,返回一个地址列表 |
+| get_current_stack_top() | 获取当前栈帧顶部内存地址 |
+| get_current_stack_bottom() | 获取当前栈帧底部内存地址 |
+| get_current_stackframe_size() | 获取当前栈帧长度 |
+| get_stack_frame_list(decimal_count=0) | 获取index指定的栈帧内存地址,返回列表 |
+| get_current_stack_disassemble() | 堆当前栈地址反汇编 |
+| get_current_stack_frame_disassemble() | 对当前栈帧地址反汇编 |
+| get_current_stack_base() | 得到当前栈地址的基地址 |
+| get_current_stack_return_name() | 得到当前栈地址返回到的模块名 |
+| get_current_stack_return_size() | 得到当前栈地址返回到的模块大小 |
+| get_current_stack_return_entry() | 得到当前栈地址返回到的模块入口 |
+| get_current_stack_return_base() | 得到当前栈地址返回到的模块基地址 |
+
+我们以输出当前堆栈中模块地址为例，演示堆栈类如何使用。
+```Python
+from LyScript32 import MyDebug
+from LyScriptTools32 import Stack
+from LyScriptTools32 import DebugControl
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 定义堆栈类
+    control = DebugControl(dbg)
+    stack = Stack(dbg)
+
+    # 得到EIP
+    eip = control.get_eip()
+
+    return_name = stack.get_current_stack_return_name()
+    print("堆栈返回到: {}".format(return_name))
+
+    return_size = stack.get_current_stack_return_size()
+    print("堆栈返回大小: {}".format(return_size))
+
+    return_entry = stack.get_current_stack_return_entry()
+    print("堆栈返回模块的入口: {}".format(hex(return_entry)))
+
+    return_base = stack.get_current_stack_return_base()
+    print("堆栈返回模块入口基地址: {}".format(hex(return_base)))
+
     dbg.close()
 ```
 <br>
 
 ### Module 模块类
 
-Module模块类的封装，提供了针对模块参数的精细化控制，对导入表，导出表，节表等具有更好的过滤效果。
+Module 类主要封装自Module系列函数，在提供了标准函数的同时还提供了更多。
 
 |  Module 类内函数名   | 函数作用  |
 |  ----  | ----  |
@@ -1283,9 +1343,67 @@ if __name__ == "__main__":
 ```
 <br>
 
+### Memory 内存类
+
+内存操作类是对内存操作函数与断点系列函数，二次封装而成，新增了新方法可供用户使用。
+
+| Memory 类内函数名 | 函数作用 |
+| ---- | ---- |
+| read_memory_byte(decimal_int=0) | 读取内存byte字节类型 |
+| read_memory_word(decimal_int=0) | 读取内存word字类型 |
+| read_memory_dword(decimal_int=0) | 读取内存dword双字类型 |
+| read_memory_ptr(decimal_int=0) | 读取内存ptr指针 |
+| read_memory(decimal_int=0,decimal_length=0) | 读取内存任意字节数,返回列表格式,错误则返回空列表 |
+| write_memory_byte(decimal_address=0, decimal_int=0) | 写内存byte字节类型 |
+| write_memory_word(decimal_address=0, decimal_int=0) | 写内存word字类型 |
+| write_memory_dword(decimal_address=0, decimal_int=0) | 写内存dword双字类型 |
+| write_memory_ptr(decimal_address=0, decimal_int=0) | 写内存ptr指针类型 |
+| write_memory(decimal_address=0, decimal_list = \[\]) | 写内存任意字节数,传入十进制列表格式 |
+| scan_local_memory_one(search_opcode="") | 扫描当前EIP所指向模块处的特征码 (传入参数 ff 25 ??) |
+| scan_local_memory_all(search_opcode="") | 扫描当前EIP所指向模块处的特征码,以列表形式反回全部 |
+| scan_memory_all_from_module(module_name="", search_opcode="") | 扫描特定模块中的特征码,以列表形式反汇所有 |
+| scan_memory_one_from_module(module_name="", search_opcode="") | 扫描特定模块中的特征码,返回第一条 |
+| scanall_memory_module_one(search_opcode="") | 扫描所有模块,找到了以列表形式返回模块名称与地址 |
+| get_local_protect() | 获取EIP所在位置处的内存属性值 |
+| get_memory_protect(decimal_address=0) | 获取指定位置处内存属性值 |
+| set_local_protect(decimal_address=0,decimal_attribute=32,decimal_size=0) | 设置指定位置保护属性值 ER执行/读取=32 |
+| get_local_page_size() | 获取当前页面长度 |
+| get_memory_section() | 得到内存中的节表 |
+| memory_xchage(memory_ptr_x=0, memory_ptr_y=0, bytes=0) | 交换两个内存区域 |
+| memory_cmp(dbg,memory_ptr_x=0,memory_ptr_y=0,bytes=0) | 对比两个内存区域 |
+| set_breakpoint(decimal_address=0) | 设置内存断点,传入十进制 |
+| delete_breakpoint(decimal_address=0) | 删除内存断点 |
+| check_breakpoint(decimal_address=0) | 检查内存断点是否命中 |
+| get_all_breakpoint() | 获取所有内存断点 |
+| set_hardware_breakpoint(decimal_address=0, decimal_type=0) | 设置硬件断点 [类型 0 = r / 1 = w / 2 = e] |
+| delete_hardware_breakpoint(decimal_address=0) | 删除硬件断点 |
+
+我们以扫描当前程序中所有符合特定特征条件的代码为例说明使用方法。
+```Python
+from LyScript32 import MyDebug
+from LyScriptTools32 import Memory
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    eip = dbg.get_register("eip")
+
+    # 定义内存类
+    memory = Memory(dbg)
+
+    # 扫描整个模块中包含特征的地址
+    ref = memory.scanall_memory_module_one("ff 25 ??")
+    print("输出列表: {}".format(ref))
+
+    dbg.close()
+```
+<br>
+
 ### Disassemble 反汇编类
 
-Disassemble 反汇编类内的方法的实现都继承于LyScript是对该模块的二次封装，增加了一些新的API函数的让用户可以有更多选择，需要注意的是如下API定义中，地址后面带有0的说明其可以省略参数，缺省值默认取当前EIP位置。
+Disassemble 反汇编类增加了新的API函数的让用户有更多选择，需要注意API定义中，地址后面带有0的说明其可以省略参数，缺省值默认取当前EIP位置。
 
 |  Disassemble 类内函数名   | 函数作用  |
 |  ----  | ----  |
@@ -1303,11 +1421,11 @@ Disassemble 反汇编类内的方法的实现都继承于LyScript是对该模块
 | assemble_code_size(assemble) | 计算用户传入汇编指令长度 |
 | get_assemble_code(assemble) | 用户传入汇编指令返回机器码 |
 | write_assemble(address,assemble) | 将汇编指令写出到指定内存位置 |
-| get_disasm_code(address,size) | 反汇编指定行数 |
+| get_disasm_code(address,size) (x64存在问题) | 反汇编指定行数 |
 | get_disasm_one_code(address = 0)| 向下反汇编一行 |
 | get_disasm_operand_code(address=0) | 得到当前内存地址反汇编代码的操作数 |
 | get_disasm_next(eip) | 获取当前EIP指令的下一条指令 |
-| get_disasm_prev(eip) | 获取当前EIP指令的上一条指令 |
+| get_disasm_prev(eip) (x64存在问题) | 获取当前EIP指令的上一条指令 |
 
 我们来举一个使用案例，其实和模块调用原理是一样的，调用时先初始化，然后就可以使用内部的函数了。
 ```Python
@@ -1338,58 +1456,56 @@ if __name__ == "__main__":
 
 ### DebugControl 调试控制类
 
-DebugControl 调试控制类主要用于控制x64dbg的行为，例如获取或设置寄存器组，执行单步命令等，此类内的方法也是最常用的。
+DebugControl 调试控制类，封装自寄存器系列函数。
 
-DebugControl 说明文档整理自：<a href="https://github.com/Softnessi">Softnessi</a>
-
-| DebugControl 类内函数名   | 函数作用 |
+| debugcontrol 类内函数名   | 函数作用 |
 |  ----  | ----  |
-| GetEAX() | 获取通用寄存器系列 |
-| SetEAX(decimal_value) | 设置特定寄存器中的值(十进制) |
-| GetZF() | 获取标志寄存器系列 |
-| SetZF(decimal_bool) | 设置标志寄存器的值(布尔型) |
-| Script_InitDebug(path) | 传入文件路径,载入被调试程序 |
-| Script_CloseDebug() | 终止当前被调试进程 |
-| Script_DetachDebug() | 让进程脱离当前调试器 |
-| Script_RunDebug() | 让进程运行起来 |
-| Script_ERun() | 释放锁并允许程序运行，忽略异常 |
-| Script_SeRun() | 释放锁并允许程序运行，跳过异常中断 |
-| Script_Pause() | 暂停调试器运行 |
-| Script_StepInto() | 步进 |
-| Script_EStepInfo() | 步进,跳过异常 |
-| Script_SeStepInto() | 步进,跳过中断 |
-| Script_StepOver() | 步过到结束 |
-| Script_StepOut() | 普通步过F8 |
-| Script_Skip() | 跳过执行 |
-| Script_Inc(register) | 递增寄存器 |
-| Script_Dec(register) | 递减寄存器 |
-| Script_Add(register,decimal_int) | 对寄存器进行add运算 |
-| Script_Sub(register,decimal_int) | 对寄存器进行sub运算 |
-| Script_Mul(register,decimal_int) | 对寄存器进行mul乘法 |
-| Script_Div(register,decimal_int) | 对寄存器进行div除法 |
-| Script_And(register,decimal_int) | 对寄存器进行and与运算 |
-| Script_Or(register,decimal_int) | 对寄存器进行or或运算 |
-| Script_Xor(register,decimal_int) | 对寄存器进行xor或运算 |
-| Script_Neg(register,decimal_int) | 对寄存器参数进行neg反转 |
-| Script_Rol(register,decimal_int) | 对寄存器进行rol循环左移 |
-| Script_Ror(register,decimal_int) | 对寄存器进行ror循环右移 |
-| Script_Shl(register,decimal_int) | 对寄存器进行shl逻辑左移 |
-| Script_Shr(register,decimal_int) | 对寄存器进行shr逻辑右移 |
-| Script_Sal(register,decimal_int) | 对寄存器进行sal算数左移 |
-| Script_Sar(register,decimal_int) | 对寄存器进行sar算数右移 |
-| Script_Not(register,decimal_int) | 对寄存器进行not按位取反 |
-| Script_Bswap(register,decimal_int) | 进行字节交换也就是反转 |
-| Script_Push(register_or_value) | 对寄存器入栈 |
-| Script_Pop(register_or_value) | 对寄存器弹出元素 |
-| Pause() | 内置API暂停 |
-| Run() | 内置API运行 |
-| StepIn() | 内置API步入 |
-| StepOut() | 内置API步过 |
-| StepOut() | 内置API到结束 |
-| Stop() | 内置API停止 |
-| Wait() | 内置API等待 |
-| IsDebug() | 内置API判断调试器是否在调试 |
-| IsRunning() | 内置API判断调试器是否在运行 |
+| get_eax() | 获取通用寄存器系列 |
+| set_eax(decimal_value) | 设置特定寄存器中的值(十进制) |
+| get_zf() | 获取标志寄存器系列 |
+| set_zf(decimal_bool) | 设置标志寄存器的值(布尔型) |
+| script_initdebug(path) | 传入文件路径,载入被调试程序 |
+| script_closedebug() | 终止当前被调试进程 |
+| script_detachdebug() | 让进程脱离当前调试器 |
+| script_rundebug() | 让进程运行起来 |
+| script_erun() | 释放锁并允许程序运行，忽略异常 |
+| script_serun() | 释放锁并允许程序运行，跳过异常中断 |
+| script_pause() | 暂停调试器运行 |
+| script_stepinto() | 步进 |
+| script_estepinfo() | 步进,跳过异常 |
+| script_sestepinto() | 步进,跳过中断 |
+| script_stepover() | 步过到结束 |
+| script_stepout() | 普通步过f8 |
+| script_skip() | 跳过执行 |
+| script_inc(register) | 递增寄存器 |
+| script_dec(register) | 递减寄存器 |
+| script_add(register,decimal_int) | 对寄存器进行add运算 |
+| script_sub(register,decimal_int) | 对寄存器进行sub运算 |
+| script_mul(register,decimal_int) | 对寄存器进行mul乘法 |
+| script_div(register,decimal_int) | 对寄存器进行div除法 |
+| script_and(register,decimal_int) | 对寄存器进行and与运算 |
+| script_or(register,decimal_int) | 对寄存器进行or或运算 |
+| script_xor(register,decimal_int) | 对寄存器进行xor或运算 |
+| script_neg(register,decimal_int) | 对寄存器参数进行neg反转 |
+| script_rol(register,decimal_int) | 对寄存器进行rol循环左移 |
+| script_ror(register,decimal_int) | 对寄存器进行ror循环右移 |
+| script_shl(register,decimal_int) | 对寄存器进行shl逻辑左移 |
+| script_shr(register,decimal_int) | 对寄存器进行shr逻辑右移 |
+| script_sal(register,decimal_int) | 对寄存器进行sal算数左移 |
+| script_sar(register,decimal_int) | 对寄存器进行sar算数右移 |
+| script_not(register,decimal_int) | 对寄存器进行not按位取反 |
+| script_bswap(register,decimal_int) | 进行字节交换也就是反转 |
+| script_push(register_or_value) | 对寄存器入栈 |
+| script_pop(register_or_value) | 对寄存器弹出元素 |
+| pause() | 内置api暂停 |
+| run() | 内置api运行 |
+| stepin() | 内置api步入 |
+| stepout() | 内置api步过 |
+| stepout() | 内置api到结束 |
+| stop() | 内置api停止 |
+| wait() | 内置api等待 |
+| is_debug() | 内置api判断调试器是否在调试 |
+| is_running() | 内置api判断调试器是否在运行 |
 
 自动控制类主要功能如上表示，其中Script开头的API是调用的脚本命令实现，其他的是API实现，我们以批量自动载入程序为例，演示该类内函数是如何使用的。
 ```Python
@@ -1435,10 +1551,78 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
+<br>
+
+### LyScript 1.0.11 新版特性
+
+LyScript 1.0.11 插件在原有函数基础上封装实现了更多有用的功能，并解决了旧版本插件中x64无法反汇编的问题，新版本插件与旧版本保持兼容，原函数不发生变化，您依然可以使用，如果需要使用新版本中的新函数，请安装以下新版本插件，并更新您的LyScript标准包。
+
+|  LyScript 1.0.11 新增函数   | 函数作用  |
+|  ----  | ----  |
+| run_command_exe_ref(command) | 执行脚本命令(返回整数) |
+| set_status_bar_message(message) | 在状态栏上面输出字符串提示 |
+| get_window_handle() | 取出自身进程模块句柄 |
+| get_disassembly(address) | 反汇编一条指令(新增) |
+| assemble_at(address,assemble) | 传入汇编指令,直接写出到内存 |
+| disasm_fast_at(address) | 反汇编一条指令,返回完整字典 |
+| get_module_at(eip) | 获取EIP所在位置处模块名 |
+| get_xref_count_at(eip) | 获取EIP位置处交叉引用计数 |
+| get_xref_type_at(eip) | 得到EIP位置处交叉引用类型 XREFTYPE |
+| get_bpx_type_at(address) | 得到指定地址处BP断点类型 BPXTYPE |
+| get_function_type_at(eip) | 获得EIP位置处函数类型 FUNCTYPE |
+| is_bp_disable(address) | 验证指定地址处BP断点是否被禁用 |
+| is_jmp_going_to_execute(eip) | 是否跳转到可执行内存块 |
+| is_run_locked() | 检查调试器是否被锁定(暂停) |
+| mem_find_base_addr(eip) | 返回EIP位置处内存模块基地址和大小(字典) |
+| mem_get_page_size(eip) | 得到EIP位置处内存页面长度 |
+| mem_is_valid(eip) | 验证EIP位置处内存是否可读 |
+| script_loader(file_path) | 从文件中加载x64dbg内置脚本 |
+| script_unloader() | 关闭打开的脚本 |
+| script_run() | 运行x64dbg内置脚本 |
+| script_set_ip(index) | 脚本指定运行第index条 |
+| open_debug(file_path) | 打开硬盘中的被调试程序(打开功能) |
+| close_debug() | 关闭被调试进程 |
+| detach_debug() | 进程脱离调试器 |
+| input_string_box(message) | 弹出输入框,用户输入后得到输入值 |
+| message_box_yes_no(title) | 弹出是否按钮选择框 |
+| message_box(title) | 弹出信息框,用于提示用户 |
+| get_branch_destination(address=0) | 获取call或者是跳转指令的跳转地址|
+| set_argument_brackets(start_address=0,end_address=0) | 在注释处增加括号 |
+| del_argument_brackets(start_address=0) | 删除注释处的括号 |
+| set_function_brackets(start_address=0,end_address=0) | 在机器码位置增加注释 |
+| del_function_brackets(start_address=0) | 删除机器码位置处的注释 |
+| set_loop_brackets(start_address=0,end_address=0) | 在反汇编位置添加注释 |
+| del_loop_brackets(depth=1, start_address=0) | 删除反汇编位置处的注释 |
+| get_section_from_module_name(module_name) | 传入模块名称,获取其节表并输出 |
+| clear_log() | 清空日志 |
+| switch_cpu() | 切换到CPU窗口 |
+| update_all_view() | 刷新所有视图参数 |
+| size_from_address(eip) | 传入基地址得到模块占用总大小 |
+| size_from_name(module_name) | 传入模块名称得到模块占用总大小 |
+| section_count_from_name(module_name) | 传入模块名称得到模块有多少个节区 |
+| section_count_from_address(eip) | 传入模块基址得到模块有多少个节区 |
+| path_from_name(module_name) | 传入模块名称得到模块路径 |
+| path_from_address(eip) | 传入模块地址得到模块路径 |
+| name_from_address(eip) | 传入模块地址得到模块名称 |
+| get_local_module_size() | 获取当前程序的大小 |
+| get_local_module_section_Count() | 获取自身节数量 |
+| get_local_module_path() | 获取被调试程序完整路径 |
+| get_local_module_name() | 获取自身模块名 |
+| get_local_module_entry() | 获取自身模块入口 |
+| get_local_module_base() | 获取自身模块基地址 |
+| set_label_at(address,label) | 在特定位置设置标签 |
+| location_label_at(label) | 定位到标签,返回内存地址 |
+| clear_label() | 清空所有标签 |
+
+
+
+
+
+
 
 <br>
 
-### 面向过程API例程 (官方案例)
+### 官方API例程
 
 LyScript 模块中的通用案例，用于演示插件内置方法如何组合使用，用户可以自行研究学习API函数是如何灵活的调用的，并自己编写一些有用的案例。
 
@@ -2929,33 +3113,3 @@ if __name__ == "__main__":
                   format(dasm_memory_list[index].get("address"),dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
     dbg.close()
 ```
-
-<br>
-
-### 面向对象API例程 (官方案例)
-
-类版本封装案例，推荐使用的版本。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

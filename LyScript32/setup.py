@@ -1,11 +1,11 @@
 import setuptools
 from distutils.core import  setup
 
-packages = ['LyScriptTools32']
+packages = ['LyScript32']
 
 setup(
-    name='LyScriptTools32',
-    version='1.0.5',
+    name='LyScript32',
+    version='1.0.10',
     author='lyshark',
     description='A powerful x64dbg remote debugging module tools',
     author_email='me@lyshark.com',
