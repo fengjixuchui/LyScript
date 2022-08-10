@@ -22,12 +22,12 @@
 
 Python 包请安装与插件一致的版本，在cmd命令行下执行pip命令即可安装，推荐两个包全部安装。
 
- - 安装标准包：`pip install LyScript32==1.0.10` 或者 `pip install LyScript64==1.0.10`
+ - 安装标准包：`pip install LyScript32` 或者 `pip install LyScript64`
  - 安装扩展包：`pip install LyScriptTools32` 或者 `pip install LyScriptTools64`
 
 其次您需要手动下载对应x64dbg版本的驱动文件，并放入指定的`plugins`目录下。
 
- - 插件下载：<a href="https://github.com/lyshark/LyScript/blob/master/plugins/LyScript32-1.0.7.zip">LyScript32 1.0.7 (32位插件)</a> 或者 <a href="https://github.com/lyshark/LyScript/blob/master/plugins/LyScript64-1.0.7.zip">LyScript64 1.0.7 (64位插件)</a>
+ - 插件下载：<a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript32-1.0.11.zip">LyScript32 1.0.11 (32位插件)</a> 或者 <a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript64-1.0.11.zip">LyScript64 1.0.11 (64位插件)</a>
 
 插件下载好以后，请将该插件复制到x64dbg的plugins目录下，程序运行后会自动加载插件。
 
@@ -1109,9 +1109,9 @@ if __name__ == "__main__":
 
 ### Script 脚本类
 
-纯脚本类的功能实现都是调用的x64dbg命令，目前由于`run_command_exec()`命令无法返回参数，故通过中转eax寄存器实现了取值，目前只能取出整数类型的参数。
+脚本类的功能实现都是调用的x64dbg命令，目前由于`run_command_exec()`命令无法返回参数，故通过中转eax寄存器实现了取值，目前只能取出整数类型的参数。
 
-纯脚本模块函数功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 的博客
+脚本类功能说明来源于：<a href="https://www.cnblogs.com/iBinary/p/16359195.html">iBinary</a> 的博客
 
 |  Script 类内函数名   | 函数作用  |
 |  ----  | ----  |
@@ -1187,7 +1187,7 @@ if __name__ == "__main__":
     connect_flag = dbg.connect()
     print("连接状态: {}".format(connect_flag))
 
-    # 定义堆栈类
+    # 定义调试类与脚本类
     control = DebugControl(dbg)
     script = Script(dbg)
 
@@ -1206,6 +1206,30 @@ if __name__ == "__main__":
 
     hash = long_to_ulong(script.hash(eip))
     print("无符号hash值: {}".format(hex(hash)))
+
+    dbg.close()
+```
+如果觉得上面的函数封装不够，或自己需要调用特定命令，那么可以直接调用该类内的`script.GetScriptValue("")`方法，自定义一个参数传递，目前只能接受返回值是整数的命令。
+```Python
+from LyScript32 import MyDebug
+from LyScriptTools32 import DebugControl
+from LyScriptTools32 import Script
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 定义控制类与脚本类
+    control = DebugControl(dbg)
+    script = Script(dbg)
+
+    # 得到EIP
+    eip = control.get_eip()
+
+    # 调用脚本命令执行函数
+    ref = script.GetScriptValue("mod.size(eip)")
+    print("模块返回值: {}".format(hex(ref)))
 
     dbg.close()
 ```
@@ -1421,11 +1445,11 @@ Disassemble 反汇编类增加了新的API函数的让用户有更多选择，�
 | assemble_code_size(assemble) | 计算用户传入汇编指令长度 |
 | get_assemble_code(assemble) | 用户传入汇编指令返回机器码 |
 | write_assemble(address,assemble) | 将汇编指令写出到指定内存位置 |
-| get_disasm_code(address,size) (x64存在问题) | 反汇编指定行数 |
+| get_disasm_code(address,size) | 反汇编指定行数 |
 | get_disasm_one_code(address = 0)| 向下反汇编一行 |
 | get_disasm_operand_code(address=0) | 得到当前内存地址反汇编代码的操作数 |
 | get_disasm_next(eip) | 获取当前EIP指令的下一条指令 |
-| get_disasm_prev(eip) (x64存在问题) | 获取当前EIP指令的上一条指令 |
+| get_disasm_prev(eip) | 获取当前EIP指令的上一条指令 |
 
 我们来举一个使用案例，其实和模块调用原理是一样的，调用时先初始化，然后就可以使用内部的函数了。
 ```Python
@@ -1556,6 +1580,7 @@ if __name__ == "__main__":
 ### LyScript 1.0.11 新版特性
 
 LyScript 1.0.11 插件在原有函数基础上封装实现了更多有用的功能，并解决了旧版本插件中x64无法反汇编的问题，新版本插件与旧版本保持兼容，原函数不发生变化，您依然可以使用，如果需要使用新版本中的新函数，请安装以下新版本插件，并更新您的LyScript标准包。
+<br>
 
 |  LyScript 1.0.11 新增函数   | 函数作用  |
 |  ----  | ----  |
@@ -1579,7 +1604,7 @@ LyScript 1.0.11 插件在原有函数基础上封装实现了更多有用的功�
 | script_loader(file_path) | 从文件中加载x64dbg内置脚本 |
 | script_unloader() | 关闭打开的脚本 |
 | script_run() | 运行x64dbg内置脚本 |
-| script_set_ip(index) | 脚本指定运行第index条 |
+| script_set_ip(index) | 脚本指定运行到第index条 |
 | open_debug(file_path) | 打开硬盘中的被调试程序(打开功能) |
 | close_debug() | 关闭被调试进程 |
 | detach_debug() | 进程脱离调试器 |
@@ -1613,6 +1638,334 @@ LyScript 1.0.11 插件在原有函数基础上封装实现了更多有用的功�
 | set_label_at(address,label) | 在特定位置设置标签 |
 | location_label_at(label) | 定位到标签,返回内存地址 |
 | clear_label() | 清空所有标签 |
+
+新版本的更新增加和许多新函数，其中比较有代表性的要属下面这些用法。
+
+**寄存器增加:** 无论32位还是64位，都可以直接获取`"CIP","CSP","CAX","CBX","CCX","CDX","CDI","CSI","CBP","CFLAGS"`这些寄存器的参数。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    eip = dbg.get_register("eip")
+    print("eip寄存器 = {}".format(hex(eip)))
+
+    csp = dbg.get_register("csp")
+    print("csp寄存器 = {}".format(hex(csp)))
+
+    cflags = dbg.get_register("cflags")
+    print("cflags寄存器 = {}".format(hex(cflags)))
+
+    dbg.close()
+```
+
+**内置参数返回功能:** 在老版本中命令执行无法携带参数传出，新版本直接在插件内部实现了参数传递，目前只支持整数。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    eip = dbg.get_register("eip")
+    print("eip寄存器 = {}".format(hex(eip)))
+
+    exec_ref = dbg.run_command_exe_ref("mod.base(eip)")
+    print("base基地址 = {}".format(hex(exec_ref)))
+    
+    dbg.close()
+```
+
+**反汇编携带更多参数:** 反汇编`disasm_fast_at`命令可以携带更多参数，可供用户自行判断是否使用本条指令。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    eip = dbg.get_register("eip")
+    print("eip寄存器 = {}".format(hex(eip)))
+
+    dic_ref = dbg.disasm_fast_at(eip)
+    print("返回字典: {}".format(dic_ref))
+
+    dbg.close()
+```
+
+**脚本载入执行功能:** 增加了脚本的载入与执行功能，用户可以载入已有的x64dbg原生脚本并通过命令执行。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    # 加载x64dbg脚本
+    flag = dbg.script_loader("d://test.txt")
+    
+    # 运行脚本
+    flag = dbg.script_run()
+    
+    # 指定行号运行
+    flag = dbg.script_set_ip(1)
+    
+    # 关闭脚本
+    flag = dbg.script_unloader()
+    
+    dbg.close()
+```
+
+**弹窗提醒功能:** 此功能提供了三种对话框，一种可输入文本，一种判断是否选中，另一种则是普通弹窗。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    # 弹出输入框
+    flag = dbg.input_string_box("请输入反汇编入口地址?")
+    print("用户的输入: {}".format(flag))
+
+    # 弹出是否框
+    flag = dbg.message_box_yes_no("是否继续执行脱壳操作?")
+    if flag == True:
+        print("脱壳")
+    else:
+        print("退出")
+
+    # 提示框
+    flag = dbg.message_box("这是第 {} 次,异常了".format(1))
+    print("状态: {}".format(flag))
+
+    dbg.close()
+```
+
+**自定义获取节表:** 用户可传入当前载入的模块名，即可直接取出指定模块的节表信息。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    ref = dbg.get_section_from_module_name("user32.dll")
+    print(ref)
+
+    dbg.close()
+```
+
+**打开关闭程序:** 本次更新还增加了打开关闭调试功能，用户可以传入文件路径让调试器打开，或者关闭指定程序。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == '__main__':
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 打开被调试进程
+    ref = dbg.open_debug("d://lyshark.exe")
+
+    # 关闭被调试进程
+    ref = dbg.close_debug()
+
+    dbg.close()
+```
+<br>
+
+### LyScriptUtils 转换工具包
+
+该工具包其目的是辅助LyScript插件实现进制与字符串或字节序列的快速转换，更好的协助反汇编任务的完成。
+
+实现对特定字节切割操作.
+```Python
+from LyScriptUtils import *
+
+# 切割32位
+ref = split_int32(0x12345678)
+print(ref)
+
+# 切割64位
+ref = split_int64(0x0FFFFFF12345678)
+print(ref)
+
+# 自定义切割字节数
+ref = split_int_bits(16,0x1234)
+print(ref)
+
+# [18, 52, 86, 120]
+# [0, 255, 255, 255, 18, 52, 86, 120]
+# [18, 52]
+```
+
+字符串转int系列
+```Python
+from LyScriptUtils import *
+
+ref = str2int16("\x12\x34\x56")
+print(hex(ref))
+
+ref = str2int32("\x12\x34\x56\x78")
+print(hex(ref))
+
+ref = str2int64("\x12\x34\x56\x78\x12\x34\x56\x78")
+print(hex(ref))
+
+ref = nstr2halfword("\x12\x34")
+print(hex(ref))
+
+ref = str2int_bits(128,"\x12\x34\x56\x78\x12\34\x56\x78\x12\x34\x56\x78\x12\34\x56\x78")
+print(hex(ref))
+
+0x1234
+0x12345678
+0x121c5678121c5678
+0x1234
+0x12345678121c567812345678121c5678
+```
+
+字符串转换并对调顺序
+```Python
+from LyScriptUtils import *
+
+ref = str2int16_swapped("\x12\x34\x56")
+print(hex(ref))
+
+ref = str2int32_swapped("\x12\x34\x56\x12\x34\x56")
+print(hex(ref))
+
+ref = str2int64_swapped("\x12\x34\x56\x12\x34\x56\x12\x34\x56\x12\x34\x56")
+print(hex(ref))
+
+ref = str2int_bits_swapped(16,"\x12\x34")
+print(hex(ref))
+
+0x3412
+0x12563412
+0x3412563412563412
+0x3412
+```
+
+字符串转换小端序与大端序
+```Python
+from LyScriptUtils import *
+
+# 小端序
+ref = str2littleendian("\x12\x34\x56\x78")
+print(hex(ref))
+
+ref = intel_str2int("\x12\x34\x56\x78")
+print(hex(ref))
+
+ref = intel_str2int("\x12\x34\x56\x78")
+print(hex(ref))
+
+0x78563412
+0x78563412
+0x78563412
+
+# 大端序
+ref = str2int32("\x12\x34\x56\x78")
+print(hex(ref))
+
+ref = str2bigendian("\x12\x34\x56\x78")
+print(hex(ref))
+
+0x12345678
+0x12345678
+```
+
+整数转换为字节序列
+```Python
+from LyScriptUtils import *
+
+ref = int2str16(0x1234)
+if ref == '\x12\x34':
+    print("int2str16")
+
+ref = halfword2bstr(0x1234)
+if ref == '\x12\x34':
+    print("int2str16")
+
+ref = short2bigstr(0x1234)
+if ref == '\x12\x34':
+    print("int2str16")
+
+ref = big_short(0x1234)
+if ref == '\x12\x34':
+    print("int2str16")
+```
+整数转为字节序列，并反转
+```Python
+from LyScriptUtils import *
+
+ref = int2str16_swapped(0x1234)
+if ref == '\x34\x12':
+    print("int2str16_swapped")
+
+ref = halfword2istr(0x1234)
+if ref == '\x34\x12':
+    print("halfword2istr")
+
+ref = intel_short(0x1234)
+if ref == '\x34\x12':
+    print("intel_short")
+
+ref = intel_short(0x123445678)
+if ref == '\x78\x56':
+    print("intel_short")
+```
+
+int32位转str32位字节序列
+```Python
+from LyScriptUtils import *
+
+ref = int2str32(0x12345678)
+if ref == '\x12\x34\x56\x78':
+    print("int2str32")
+
+ref = big_order(0x12345678)
+if ref == '\x12\x34\x56\x78':
+    print("big_order")
+```
+int32位转str32位字节序列并反转
+```Python
+ref = int2str32_swapped(0x12345678)
+if ref == '\x78\x56\x34\x12':
+    print("int2str32_swapped")
+
+ref = intel_order(0x12345678)
+if ref == '\x78\x56\x34\x12':
+    print("intel_order")
+```
+二进制与字符串互相转换
+```Python
+from LyScriptUtils import *
+
+ref = print_binary(0x12345678)
+if ref == '00010010001101000101011001111000':
+    print(ref)
+
+ref = binary_string_short(0x12345678)
+if ref == '0101011001111000':
+    print(ref)
+	
+00010010001101000101011001111000
+0101011001111000
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
