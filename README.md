@@ -15,7 +15,7 @@
 [![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
-一款 x64dbg 自动化控制插件，通过Python控制x64dbg，实现远程动态调试，解决了逆向工作者分析漏洞，反病毒人员脱壳，寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
+一款 x64dbg 自动化控制插件，通过Python控制x64dbg的行为，实现远程动态调试，解决了逆向工作者分析程序，反病毒人员脱壳，漏洞分析者寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及其丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
   
 </div>
 <br>
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
  - 参数1：传入寄存器字符串
 
-可用范围："DR0", "DR1", "DR2", "DR3", "DR6", "DR7", "EAX", "AX", "AH", "AL", "EBX", "BX", "BH", "BL", "ECX", "CX", "CH", "CL", "EDX", "DX", "DH", "DL", "EDI", "DI", "ESI", "SI", "EBP", "BP", "ESP", "SP", "EIP"
+可用范围："DR0", "DR1", "DR2", "DR3", "DR6", "DR7", "EAX", "AX", "AH", "AL", "EBX", "BX", "BH", "BL", "ECX", "CX", "CH", "CL", "EDX", "DX", "DH", "DL", "EDI", "DI","ESI", "SI", "EBP", "BP", "ESP", "SP", "EIP", "CIP", "CSP", "CAX", "CBX", "CCX", "CDX", "CDI", "CSI", "CBP", "CFLAGS"
 
 ```Python
 from LyScript32 import MyDebug
@@ -1778,208 +1778,344 @@ if __name__ == '__main__':
 
 ### LyScriptUtils 转换工具包
 
-该工具包其目的是辅助LyScript插件实现进制与字符串或字节序列的快速转换，更好的协助反汇编任务的完成。
+该工具包其目的是辅助LyScript插件实现进制与字符串或字节序列的快速转换，协助逆向工作者更好的反汇编，工具包默认支持32位与64位环境。
 
-实现对特定字节切割操作.
+ - 安装进制转换工具包: `pip install LyScriptUtils`
+
+将一个特定字节切割成等量的字节数组
 ```Python
+from LyScript32 import MyDebug
 from LyScriptUtils import *
 
-# 切割32位
-ref = split_int32(0x12345678)
-print(ref)
-
-# 切割64位
-ref = split_int64(0x0FFFFFF12345678)
-print(ref)
-
-# 自定义切割字节数
-ref = split_int_bits(16,0x1234)
-print(ref)
-
-# [18, 52, 86, 120]
-# [0, 255, 255, 255, 18, 52, 86, 120]
-# [18, 52]
-```
-
-字符串转int系列
-```Python
-from LyScriptUtils import *
-
-ref = str2int16("\x12\x34\x56")
-print(hex(ref))
-
-ref = str2int32("\x12\x34\x56\x78")
-print(hex(ref))
-
-ref = str2int64("\x12\x34\x56\x78\x12\x34\x56\x78")
-print(hex(ref))
-
-ref = nstr2halfword("\x12\x34")
-print(hex(ref))
-
-ref = str2int_bits(128,"\x12\x34\x56\x78\x12\34\x56\x78\x12\x34\x56\x78\x12\34\x56\x78")
-print(hex(ref))
-
-0x1234
-0x12345678
-0x121c5678121c5678
-0x1234
-0x12345678121c567812345678121c5678
-```
-
-字符串转换并对调顺序
-```Python
-from LyScriptUtils import *
-
-ref = str2int16_swapped("\x12\x34\x56")
-print(hex(ref))
-
-ref = str2int32_swapped("\x12\x34\x56\x12\x34\x56")
-print(hex(ref))
-
-ref = str2int64_swapped("\x12\x34\x56\x12\x34\x56\x12\x34\x56\x12\x34\x56")
-print(hex(ref))
-
-ref = str2int_bits_swapped(16,"\x12\x34")
-print(hex(ref))
-
-0x3412
-0x12563412
-0x3412563412563412
-0x3412
-```
-
-字符串转换小端序与大端序
-```Python
-from LyScriptUtils import *
-
-# 小端序
-ref = str2littleendian("\x12\x34\x56\x78")
-print(hex(ref))
-
-ref = intel_str2int("\x12\x34\x56\x78")
-print(hex(ref))
-
-ref = intel_str2int("\x12\x34\x56\x78")
-print(hex(ref))
-
-0x78563412
-0x78563412
-0x78563412
-
-# 大端序
-ref = str2int32("\x12\x34\x56\x78")
-print(hex(ref))
-
-ref = str2bigendian("\x12\x34\x56\x78")
-print(hex(ref))
-
-0x12345678
-0x12345678
-```
-
-整数转换为字节序列
-```Python
-from LyScriptUtils import *
-
-ref = int2str16(0x1234)
-if ref == '\x12\x34':
-    print("int2str16")
-
-ref = halfword2bstr(0x1234)
-if ref == '\x12\x34':
-    print("int2str16")
-
-ref = short2bigstr(0x1234)
-if ref == '\x12\x34':
-    print("int2str16")
-
-ref = big_short(0x1234)
-if ref == '\x12\x34':
-    print("int2str16")
-```
-整数转为字节序列，并反转
-```Python
-from LyScriptUtils import *
-
-ref = int2str16_swapped(0x1234)
-if ref == '\x34\x12':
-    print("int2str16_swapped")
-
-ref = halfword2istr(0x1234)
-if ref == '\x34\x12':
-    print("halfword2istr")
-
-ref = intel_short(0x1234)
-if ref == '\x34\x12':
-    print("intel_short")
-
-ref = intel_short(0x123445678)
-if ref == '\x78\x56':
-    print("intel_short")
-```
-
-int32位转str32位字节序列
-```Python
-from LyScriptUtils import *
-
-ref = int2str32(0x12345678)
-if ref == '\x12\x34\x56\x78':
-    print("int2str32")
-
-ref = big_order(0x12345678)
-if ref == '\x12\x34\x56\x78':
-    print("big_order")
-```
-int32位转str32位字节序列并反转
-```Python
-ref = int2str32_swapped(0x12345678)
-if ref == '\x78\x56\x34\x12':
-    print("int2str32_swapped")
-
-ref = intel_order(0x12345678)
-if ref == '\x78\x56\x34\x12':
-    print("intel_order")
-```
-二进制与字符串互相转换
-```Python
-from LyScriptUtils import *
-
-ref = print_binary(0x12345678)
-if ref == '00010010001101000101011001111000':
+if __name__ == '__main__':
+    # 切割32位
+    # [18, 52, 86, 120]
+    ref = split_int32(0x12345678)
     print(ref)
 
-ref = binary_string_short(0x12345678)
-if ref == '0101011001111000':
+    # 切割64位
+    # [0, 255, 255, 255, 18, 52, 86, 120]
+    ref = split_int64(0x0FFFFFF12345678)
     print(ref)
-	
-00010010001101000101011001111000
-0101011001111000
+
+    # 自定义切割字节数
+    # [18, 52]
+    ref = split_int_bits(16,0x1234)
+    print(ref)
 ```
 
+将一个十六进制字符串转成等量的INT类型
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
 
+if __name__ == '__main__':
+    # 0x1234
+    ref = str2int16("\x12\x34\x56")
+    print(hex(ref))
 
+    # 0x12345678
+    ref = str2int32("\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 0x121c5678121c5678
+    ref = str2int64("\x12\x34\x56\x78\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 0x1234
+    ref = nstr2halfword("\x12\x34")
+    print(hex(ref))
 
+    # 0x12345678121c567812345678121c5678
+    ref = str2int_bits(128,"\x12\x34\x56\x78\x12\34\x56\x78\x12\x34\x56\x78\x12\34\x56\x78")
+    print(hex(ref))
+```
 
+将一个十六进制字符串转成等量的INT类型,并反转参数
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
 
+if __name__ == '__main__':
+    # 0x3412
+    ref = str2int16_swapped("\x12\x34\x56")
+    print(hex(ref))
 
+    # 0x12563412
+    ref = str2int32_swapped("\x12\x34\x56\x12\x34\x56")
+    print(hex(ref))
 
+    # 0x3412563412563412
+    ref = str2int64_swapped("\x12\x34\x56\x12\x34\x56\x12\x34\x56\x12\x34\x56")
+    print(hex(ref))
 
+    # 0x3412
+    ref = str2int_bits_swapped(16,"\x12\x34")
+    print(hex(ref))
+```
 
+将字符串转换成对等小端序或大端序的十六进制整数
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
 
+if __name__ == '__main__':
+    # 小端序
+    # 0x78563412
+    ref = str2littleendian("\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 0x78563412
+    ref = intel_str2int("\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 0x78563412
+    ref = intel_str2int("\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 大端序
+    # 0x12345678
+    ref = str2int32("\x12\x34\x56\x78")
+    print(hex(ref))
 
+    # 0x12345678
+    ref = str2bigendian("\x12\x34\x56\x78")
+    print(hex(ref))
+```
+
+将一个十六进制整数转换为字节序列
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    ref = int2str16(0x1234)
+    if ref == '\x12\x34':
+        print("int2str16")
+
+    ref = halfword2bstr(0x1234)
+    if ref == '\x12\x34':
+        print("int2str16")
+
+    ref = short2bigstr(0x1234)
+    if ref == '\x12\x34':
+        print("int2str16")
+
+    ref = big_short(0x1234)
+    if ref == '\x12\x34':
+        print("int2str16")
+```
+
+将一个十六进制整数转换为字节序列,并反转参数
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    ref = int2str16_swapped(0x1234)
+    if ref == '\x34\x12':
+        print("int2str16_swapped")
+
+    ref = halfword2istr(0x1234)
+    if ref == '\x34\x12':
+        print("halfword2istr")
+
+    ref = intel_short(0x1234)
+    if ref == '\x34\x12':
+        print("intel_short")
+
+    ref = intel_short(0x123445678)
+    if ref == '\x78\x56':
+        print("intel_short")
+```
+
+将INT类型十六进制数值,转换为str32位字节序列
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    ref = int2str32(0x12345678)
+    if ref == '\x12\x34\x56\x78':
+        print("int2str32")
+
+    ref = big_order(0x12345678)
+    if ref == '\x12\x34\x56\x78':
+        print("big_order")
+```
+
+将一个INT类型,转换为str32字节序列,并反转参数
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    ref = int2str32_swapped(0x12345678)
+    if ref == '\x78\x56\x34\x12':
+        print("int2str32_swapped")
+
+    ref = intel_order(0x12345678)
+    if ref == '\x78\x56\x34\x12':
+        print("intel_order")
+```
+
+将一个十六进制INT整数,转换成一个二进制字符串
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    # 00010010001101000101011001111000
+    ref = print_binary(0x12345678)
+    if ref == '00010010001101000101011001111000':
+        print(ref)
+
+    # 0101011001111000
+    ref = binary_string_short(0x12345678)
+    if ref == '0101011001111000':
+        print(ref)
+```
+
+针对有符号数与无符号数的类型转换函数
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    # 无符号数转换
+    if uint16(0xffff) == 0xffff:
+        print("uint16")
+
+    if uint64(0x0000000ffffffff) == 0x0000000ffffffff:
+        print("uint64")
+
+    # 有符号数转换
+    if sint16(0xffff) == -1:
+        print("sint16")
+
+    if sint16(0xffff) == sint16(-1):
+        print("sint16==sint16")
+
+    if signedshort(0xffff) == -1:
+        print("signedshort")
+
+    # 有符号大整数
+    if sint32(-1) == -1:
+        print("sint32")
+
+    if big2int(0x123456789) == 0x23456789:
+        print("big2int")
+```
+
+将一个无符号数格式化为十六进制字符串
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    if(uintfmt_bits(32,0x12345678)=='0x12345678'):
+        print("uintfmt_bits")
+
+    if(uintfmt_bits(16,0x1234)=='0x1234'):
+        print("uintfmt_bits")
+
+    if(uint16fmt(0x123456)=='0x3456'):
+        print("uintfmt_bits")
+
+    if(uint16fmt(-0x123456)=='0xcbaa'):
+        print("uintfmt_bits")
+
+    if(uint32fmt(0x1234)=='0x00001234'):
+        print("uintfmt_bits")
+
+    if(uint64fmt(0x12345678)=='0x0000000012345678'):
+        print("uintfmt_bits")
+
+    if(uint64fmt(-1)=='0xffffffffffffffff'):
+        print("uintfmt_bits")
+
+    if(uint8fmt(0x0f)=='0x0f'):
+        print("uint8fmt")
+```
+
+将一个有符号数格式化为十六进制字符串
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    # sint16fmt
+    if(sint16fmt(0x1234)=='0x1234'):
+        print("sint16fmt")
+
+    if(sint16fmt(-0x1234)=='-0x1234'):
+        print("sint16fmt")
+
+    # sint32fmt
+    if(sint32fmt(-0x1234)=='-0x00001234'):
+        print("sint32fmt")
+
+    # sint64fmt
+    if(sint64fmt(-1)=='-0x0000000000000001'):
+        print("sint64fmt")
+```
+
+将一个十六进制INT整数反转
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    # 0x78563412
+    if(byteswap_32(0x12345678)==0x78563412):
+        print("32位反转")
+
+    # 0x5634129078563412
+    if(byteswap_64(0x1234567890123456)==0x5634129078563412):
+        print("64位反转")
+```
+
+对一个字符串执行十六进制格式化输出
+```Python
+from LyScript32 import MyDebug
+from LyScriptUtils import *
+
+if __name__ == '__main__':
+    # 十六进制格式输出
+    # [0x12][0x34]
+    hexpr = hexprint("".join(int2list(uint16(0x1234))[2:4]))
+    print(hexpr)
+
+    # 字节序列转换成字符串
+    # [8b][ec][12][ff][8b][ec][12][ff]
+    byte_string = prettyprint("\x8b\xec\x12\xff\x8b\xec\x12\xff")
+    print(byte_string)
+
+    # 字符串转换成shellcode
+    # unsigned char buf[] = "\x6c\x79\x73\x68\x61\x72\x6b"; // 7 bytes
+    shellcode = c_array("lyshark")
+    print(shellcode)
+
+    # dump shellcode
+    dump = shellcode_dump("\x6c\x79\x73\x68\x61\x72\x6b")
+
+    # 将字符串转为二进制数组
+    # [0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1]
+    ref = binary_from_string("lushark")
+    print(ref)
+
+    # 输出字符串的十六进制格式
+    # [('6C 79 73 68 61 72 6B ', 'lyshark')]
+    ref = hexdump("lyshark")
+    print(ref)
+```
 <br>
 
-### 官方API例程
+### 官方API使用例程 [文档]
 
-LyScript 模块中的通用案例，用于演示插件内置方法如何组合使用，用户可以自行研究学习API函数是如何灵活的调用的，并自己编写一些有用的案例。
+本人结合LyScript插件API函数实现的一些通用案例，用于演示插件内置方法是如何灵活组合运用的，其目的是让用户可以自行研究学习API函数的参数传递，并能够通过案例的学习快速掌握官方API函数的使用方法。
 
-**PEFile 载入内存格式:** 案例演示，如何将一个可执行文件中的内存数据通过PEfile模块打开。
+**PEFile载入PE程序到内存:** 将PE可执行文件中的内存数据通过PEfile模块打开并读入内存，实现PE参数解析。
 ```Python
 from LyScript32 import MyDebug
 import pefile
@@ -2028,11 +2164,13 @@ if __name__ == "__main__":
     oPE = pefile.PE(data = byte_array)
 
     for section in oPE.sections:
-        print("%10s %10x %10x %10x" %(section.Name.decode("utf-8"), section.VirtualAddress, section.Misc_VirtualSize, section.SizeOfRawData))
+        print("%10s %10x %10x %10x" 
+	%(section.Name.decode("utf-8"), section.VirtualAddress, 
+	section.Misc_VirtualSize, section.SizeOfRawData))
     dbg.close()
 ```
 
-**验证PE程序启用的保护方式:** 验证保护方式需要通过`dbg.get_all_module()`遍历加载过的模块，并依次读入`DllCharacteristics`与操作数进行与运算得到保护方式。
+**验证PE启用的保护方式:** 验证保护方式需要通过`dbg.get_all_module()`遍历加载过的模块，并依次读入`DllCharacteristics`与操作数进行与运算得到保护方式。
 ```Python
 from LyScript32 import MyDebug
 import pefile
@@ -2083,7 +2221,113 @@ if __name__ == "__main__":
     dbg.close()
 ```
 
-**全模块特征匹配:** 针对所有模块中的特征码模糊匹配，找到会返回内存地址。
+**计算PE节区内存特征:** 通过循环读入节区数据，并动态计算出该节的MD5以及CRC32特征值输出。
+```Python
+import binascii
+import hashlib
+from LyScript32 import MyDebug
+
+def crc32(data):
+    return "0x{:X}".format(binascii.crc32(data) & 0xffffffff)
+
+def md5(data):
+    md5 = hashlib.md5(data)
+    return md5.hexdigest()
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 循环节
+    section = dbg.get_section()
+    for index in section:
+        # 定义字节数组
+        mem_byte = bytearray()
+
+        address = index.get("addr")
+        section_name = index.get("name")
+        section_size = index.get("size")
+
+        # 读出节内的所有数据
+        for item in range(0,int(section_size)):
+            mem_byte.append( dbg.read_memory_byte(address + item))
+
+        # 开始计算特征码
+        md5_sum = md5(mem_byte)
+        crc32_sum = crc32(mem_byte)
+
+        print("[*] 节名: {:10s} | 节长度: {:10d} | MD5特征: {} | CRC32特征: {}"
+              .format(section_name,section_size,md5_sum,crc32_sum))
+
+    dbg.close()
+```
+
+**文件FOA与内存VA转换:** 封装实现`get_offset_from_va()`用于将VA内存虚拟地址转为FOA文件偏移地址，封装实现`get_va_from_foa()`用于将FOA文件偏移地址转为VA内存虚拟地址。
+```Python
+from LyScript32 import MyDebug
+import pefile
+
+# 传入一个VA值获取到FOA文件地址
+def get_offset_from_va(pe_ptr, va_address):
+    # 得到内存中的程序基地址
+    memory_image_base = dbg.get_base_from_address(dbg.get_local_base())
+
+    # 与VA地址相减得到内存中的RVA地址
+    memory_local_rva = va_address - memory_image_base
+
+    # 根据RVA得到文件内的FOA偏移地址
+    foa = pe_ptr.get_offset_from_rva(memory_local_rva)
+    return foa
+
+# 传入一个FOA文件地址得到VA虚拟地址
+def get_va_from_foa(pe_ptr, foa_address):
+    # 先得到RVA相对偏移
+    rva = pe_ptr.get_rva_from_offset(foa_address)
+
+    # 得到内存中程序基地址,然后计算VA地址
+    memory_image_base = dbg.get_base_from_address(dbg.get_local_base())
+    va = memory_image_base + rva
+    return va
+
+# 传入一个FOA文件地址转为RVA地址
+def get_rva_from_foa(pe_ptr, foa_address):
+    sections = [s for s in pe_ptr.sections if s.contains_offset(foa_address)]
+    if sections:
+        section = sections[0]
+        return (foa_address - section.PointerToRawData) + section.VirtualAddress
+    else:
+        return 0
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 载入文件PE
+    pe = pefile.PE(name=dbg.get_local_module_path())
+
+    # 读取文件中的地址
+    rva = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+    va = pe.OPTIONAL_HEADER.ImageBase + pe.OPTIONAL_HEADER.AddressOfEntryPoint
+    foa = pe.get_offset_from_rva(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+    print("文件VA地址: {} 文件FOA地址: {} 从文件获取RVA地址: {}".format(hex(va), foa, hex(rva)))
+
+    # 将VA虚拟地址转为FOA文件偏移
+    eip = dbg.get_register("eip")
+    foa = get_offset_from_va(pe, eip)
+    print("虚拟地址: 0x{:x} 对应文件偏移: {}".format(eip, foa))
+
+    # 将FOA文件偏移转为VA虚拟地址
+    va = get_va_from_foa(pe, foa)
+    print("文件地址: {} 对应虚拟地址: 0x{:x}".format(foa, va))
+
+    # 将FOA文件偏移地址转为RVA相对地址
+    rva = get_rva_from_foa(pe, foa)
+    print("文件地址: {} 对应的RVA相对地址: 0x{:x}".format(foa, rva))
+
+    dbg.close()
+```
+
+**扫描所有模块匹配特征:** 针对程序内加载的所有模块扫描特征码，如果找到了会返回内存地址，以及模块详细参数。
 ```Python
 from LyScript32 import MyDebug
 
@@ -2091,19 +2335,30 @@ if __name__ == "__main__":
     dbg = MyDebug()
     dbg.connect()
 
+    # 获取所有模块
     for entry in dbg.get_all_module():
         eip = entry.get("entry")
+        base = entry.get("base")
+        name = entry.get("name")
 
         if eip != 0:
+            # 设置EIP到模块入口处
             dbg.set_register("eip",eip)
 
+            # 开始搜索特征
             search = dbg.scan_memory_one("ff 25 ??")
-            print(hex(search))
+            if search != 0 or search != None:
+
+                # 如果找到了,则反汇编此行
+                dasm = dbg.disasm_fast_at(search)
+
+                print("addr = {} | base = {} | module = {} | search_addr = {} | dasm = {}"
+                      .format(eip,base,name,eip,dasm.get("disasm")))
 
     dbg.close()
 ```
 
-**搜索汇编特征:** 使用python实现方法，通过特定方法扫描内存范围，如果出现我们所需要的指令集序列，则输出该指令的具体内存地址。
+**简单的搜索汇编特征:** 使用python实现方法，通过特定方法扫描内存范围，如果出现我们所需要的指令集序列，则输出该指令的具体内存地址。
 ```Python
 from LyScript32 import MyDebug
 
@@ -2254,6 +2509,40 @@ if __name__ == "__main__":
     dbg.close()
 ```
 
+**得到_PEB_LDR_DATA线程环境块:** 想要得到线程环境块最好的办法就是在目标内存中执行获取线程块的汇编指令，我们可以写出到内存并执行取值。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug(address="127.0.0.1")
+    dbg.connect()
+
+    # 保存当前EIP
+    eip = dbg.get_register("eip")
+
+    # 创建堆
+    heap_addres = dbg.create_alloc(1024)
+    print("堆空间地址: {}".format(hex(heap_addres)))
+
+    # 写出汇编指令
+    # mov eax,fs:[0x30] 得到 _PEB
+    dbg.assemble_at(heap_addres,"mov eax,fs:[0x30]")
+    asmfs_size = dbg.get_disasm_operand_size(heap_addres)
+
+    # 写出汇编指令
+    # mov eax,[eax+0x0C] 得到 _PEB_LDR_DATA
+    dbg.assemble_at(heap_addres + asmfs_size, "mov eax, [eax + 0x0C]")
+    asmeax_size = dbg.get_disasm_operand_size(heap_addres + asmfs_size)
+
+    # 跳转回EIP位置
+    dbg.assemble_at(heap_addres+ asmfs_size + asmeax_size , "jmp {}".format(hex(eip)))
+
+    # 设置EIP到堆首地址
+    dbg.set_register("eip",heap_addres)
+
+    dbg.close()
+```
+
 **内存字节变更后回写:** 封装字节函数`write_opcode_list()`传入内存地址，对该地址中的字节更改后再回写到原来的位置。
 
  - 加密算法在内存中会通过S盒展开解密，有时需要特殊需求，捕捉解密后的S-box写入内存，或对矩阵进行特殊处理后替换，这样写即可实现。
@@ -2399,7 +2688,8 @@ if __name__ == "__main__":
             search_address = dbg.scan_memory_all(opcode[index])
 
             if search_address != False:
-                print("指令: {} --> 模块: {} --> 个数: {}".format(search_asm[index],base_name,len(search_address)))
+                print("指令: {} --> 模块: {} --> 个数: {}".
+		format(search_asm[index],base_name,len(search_address)))
 
                 for search_index in search_address:
                     print("[*] {}".format(hex(search_index)))
@@ -2929,7 +3219,8 @@ def is_cond(dbg,address):
         dis = dbg.get_disasm_one_code(address)
         if dis != False or dis != None:
 
-            if dis.split(" ")[0].replace(" ","") in ["je","jne","jz","jnz","ja","jna","jp","jnp","jb","jnb","jg","jng","jge","jl","jle"]:
+            if dis.split(" ")[0].replace(" ","") 
+	    	in ["je","jne","jz","jnz","ja","jna","jp","jnp","jb","jnb","jg","jng","jge","jl","jle"]:
                 return True
             return False
         return False
@@ -2996,7 +3287,8 @@ if __name__ == "__main__":
     # 内存对比
     cmp_ref = memory_cmp(dbg, 12386320,12386352,4)
     for index in range(0,len(cmp_ref)):
-        print("地址: 0x{:08X} -> X: 0x{:02x} -> y: 0x{:02x}".format(cmp_ref[index].get("addr"),cmp_ref[index].get("x"),cmp_ref[index].get("y")))
+        print("地址: 0x{:08X} -> X: 0x{:02x} -> y: 0x{:02x}"
+		.format(cmp_ref[index].get("addr"),cmp_ref[index].get("x"),cmp_ref[index].get("y")))
 
     dbg.close()
 ```
@@ -3245,7 +3537,9 @@ if __name__ == "__main__":
 
         # 使用转换
         print("默认有符号数: {:15} --> 转为无符号数: {:15} --> 转为有符号数: {:15}".
-              format(stack_address, long_to_ulong(stack_address),ulong_to_long(long_to_ulong(stack_address))))
+              format(stack_address, 
+	      long_to_ulong(stack_address),
+	      ulong_to_long(long_to_ulong(stack_address))))
 
     dbg.close()
 ```
@@ -3288,7 +3582,8 @@ if __name__ == "__main__":
         else:
             mod_base = dbg.get_base_from_address(long_to_ulong(stack_address))
 
-        print("stack => [{}] addr = {:10} base = {:10} dasm = {}".format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
+        print("stack => [{}] addr = {:10} base = {:10} dasm = {}".
+		format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
 
     dbg.close()
 ```
@@ -3335,7 +3630,8 @@ if __name__ == "__main__":
         else:
             mod_base = dbg.get_base_from_address(long_to_ulong(stack_address))
 
-        # print("stack => [{}] addr = {:10} base = {:10} dasm = {}".format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
+        # print("stack => [{}] addr = {:10} base = {:10} dasm = {}"
+		.format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
         if mod_base > 0:
             for x in module_list:
                 if mod_base == x.get("base"):
@@ -3463,6 +3759,7 @@ if __name__ == "__main__":
     for index in range(0,len(dasm_file_list)):
         if dasm_memory_list[index] != dasm_file_list[index]:
             print("地址: {:8} --> 内存反汇编: {:32} --> 磁盘反汇编: {:32}".
-                  format(dasm_memory_list[index].get("address"),dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
+                  format(dasm_memory_list[index].get("address"),
+		  	dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
     dbg.close()
 ```

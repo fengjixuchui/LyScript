@@ -290,14 +290,6 @@ def binary_from_string(astr, bits=None):
             mask = mask >> 1
     return ret
 
-def b(mystr):
-    mydict = {"1": 1, "0": 0}
-    tmp = 0
-    for c in mystr:
-        value = mydict[c]
-        tmp = (tmp << 1) + value
-    return tmp
-
 def hexdump(buf):
     tbl = []
     tmp = ""
