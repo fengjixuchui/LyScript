@@ -12,7 +12,7 @@
   
 [![Build status](https://cdn.lyshark.com/archive/LyScript/build.svg)](https://github.com/lyshark/LyScript) [![Open Source Helpers](https://cdn.lyshark.com/archive/LyScript/users.svg)](https://github.com/lyshark/LyScript) [![Crowdin](https://cdn.lyshark.com/archive/LyScript/email.svg)](mailto:me@lyshark.com) [![Download x64dbg](https://cdn.lyshark.com/archive/LyScript/x64dbg.svg)](https://github.com/lyshark/LyScript/releases/tag/LyScript) [![OSCS Status](https://www.oscs1024.com/platform/badge/lyshark/LyScript.svg?size=small)](https://www.oscs1024.com/project/lyshark/LyScript?ref=badge_small)
 
-[![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript)
+[![python3](https://cdn.lyshark.com/archive/LyScript/python3.svg)](https://github.com/lyshark/LyScript) [![platform](https://cdn.lyshark.com/archive/LyScript/platform.svg)](https://github.com/lyshark/LyScript) [![lyscriptver](https://cdn.lyshark.com/archive/LyScript/lyscript_version.svg)](https://github.com/lyshark/LyScript)
 
 <br><br>
 一款 x64dbg 自动化控制插件，通过Python控制x64dbg的行为，实现远程动态调试，解决了逆向工作者分析程序，反病毒人员脱壳，漏洞分析者寻找指令片段，原生脚本不够强大的问题，通过与Python相结合利用Python语法的灵活性以及其丰富的第三方库，加速漏洞利用程序的开发，辅助漏洞挖掘以及恶意软件分析。
@@ -2111,7 +2111,7 @@ if __name__ == '__main__':
 ```
 <br>
 
-### 官方API使用例程 [文档]
+### 官方API使用例程 [官方案例]
 
 本人结合LyScript插件API函数实现的一些通用案例，用于演示插件内置方法是如何灵活组合运用的，其目的是让用户可以自行研究学习API函数的参数传递，并能够通过案例的学习快速掌握官方API函数的使用方法。
 
@@ -2409,38 +2409,170 @@ if __name__ == "__main__":
     dbg.close()
 ```
 
-**简单的搜索汇编特征:** 使用python实现方法，通过特定方法扫描内存范围，如果出现我们所需要的指令集序列，则输出该指令的具体内存地址。
+**绕过反调试机制:** 最常用的反调试机制就是用`IsDebuggerPresent`该标志检查`PEB+2`位置处的内容，如果为1则表示正在被调试，我们运行脚本直接将其设置为0即可绕过反调试机制。
 ```Python
 from LyScript32 import MyDebug
 
-# 检索指定序列中是否存在一段特定的指令集
-def SearchOpCode(OpCodeList,SearchCode,ReadByte):
-            pass
+if __name__ == "__main__":
+    # 初始化
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 通过PEB找到调试标志位
+    peb = dbg.get_peb_address(dbg.get_process_id())
+    print("调试标志地址: 0x{:x}".format(peb+2))
+
+    flag = dbg.read_memory_byte(peb+2)
+    print("调试标志位: {}".format(flag))
+
+    # 将调试标志设置为0即可过掉反调试
+    nop_debug = dbg.write_memory_byte(peb+2,0)
+    print("反调试绕过状态: {}".format(nop_debug))
+    
+    dbg.close()
+```
+
+**绕过进程枚举:** 病毒会枚举所有运行的进程以确认是否有调试器在运行，我们可以在特定的函数开头处写入`SUB EAX,EAX RET`指令让其无法调用枚举函数从而失效。
+```Python
+from LyScript32 import MyDebug
+
+# 得到所需要的机器码
+def set_assemble_opcde(dbg,address):
+    # 得到第一条长度
+    opcode_size = dbg.assemble_code_size("sub eax,eax")
+
+    # 写出汇编指令
+    dbg.assemble_at(address, "sub eax,eax")
+    dbg.assemble_at(address + opcode_size , "ret")
+
+if __name__ == "__main__":
+    # 初始化
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 得到函数所在内存地址
+    process32first = dbg.get_module_from_function("kernel32","Process32FirstW")
+    process32next = dbg.get_module_from_function("kernel32","Process32NextW")
+    print("process32first = 0x{:x} | process32next = 0x{:x}".format(process32first,process32next))
+
+    # 替换函数位置为sub eax,eax ret
+    set_assemble_opcde(dbg, process32first)
+    set_assemble_opcde(dbg, process32next)
+
+    dbg.close()
+```
+
+**批量搜索反汇编代码:** 与搜索机器码类似，此功能实现了搜索代码段中所有指令集，匹配列表中是否存在，存在则返回地址。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    local_base_start = dbg.get_local_base()
+    local_base_end = local_base_start + dbg.get_local_size()
+    print("开始地址: {} --> 结束地址: {}".format(hex(local_base_start),hex(local_base_end)))
+
+    search_asm = ['test eax,eax', 'cmp esi, edi', 'pop edi', 'cmp esi,edi', 'jmp esp']
+
+    while local_base_start <= local_base_end:
+        disasm = dbg.get_disasm_one_code(local_base_start)
+        print("地址: 0x{:08x} --> 反汇编: {}".format(local_base_start,disasm))
+
+        # 寻找指令
+        for index in range(0, len(search_asm)):
+            if disasm == search_asm[index]:
+                print("地址: {} --> 反汇编: {}".format(hex(local_base_start), disasm))
+
+        # 递增计数器
+        local_base_start = local_base_start + dbg.get_disasm_operand_size(local_base_start)
+
+    dbg.close()
+```
+
+**搜索反汇编列表特征:** 使用python实现方法，通过特定方法扫描内存范围，如果出现我们所需要的指令集序列，则输出该指令的具体内存地址。
+```Python
+from LyScript32 import MyDebug
+
+# 传入汇编代码,得到对应机器码
+def get_opcode_from_assemble(dbg_ptr,asm):
+    byte_code = bytearray()
+
+    addr = dbg_ptr.create_alloc(1024)
+    if addr != 0:
+        asm_size = dbg_ptr.assemble_code_size(asm)
+        # print("汇编代码占用字节: {}".format(asm_size))
+
+        write = dbg_ptr.assemble_write_memory(addr,asm)
+        if write == True:
+            for index in range(0,asm_size):
+                read = dbg_ptr.read_memory_byte(addr + index)
+                # print("{:02x} ".format(read),end="")
+                byte_code.append(read)
+        dbg_ptr.delete_alloc(addr)
+        return byte_code
+    else:
+        return bytearray(0)
+
+# 搜索机器码,如果存在则返回
+def SearchOpCode(dbg_ptr, Search):
+
+    # 搜索机器码并转换为列表
+    op_code = []
+    for index in Search:
+        byte_array = get_opcode_from_assemble(dbg, index)
+        for index in byte_array:
+            op_code.append(hex(index))
+
+    # print("机器码列表: {}".format(op_code))
+
+    # 将机器码列表转换为字符串
+    # 1.先转成字符串列表
+    x = [str(i) for i in op_code]
+
+    # 2.将字符串列表转为字符串
+    # search_code = ' '.join(x).replace("0x","")
+    search_code = []
+
+    # 增加小于三位前面的0
+    for l in range(0,len(x)):
+        if len(x[l]) <= 3:
+            # 如果是小于3位数则在前面增加0
+            # print(''.join(x[l]).replace("0x","").zfill(2))
+            search_code.append(''.join(x[l]).replace("0x","").zfill(2))
+        else:
+            search_code.append(''.join(x[l]).replace("0x", ""))
+
+    # 3.变成字符串
+    search_code = ' '.join(search_code).replace("0x", "")
+    print("被搜索字符串: {}".format(search_code))
+
+    # 调用搜索命令
+    ref = dbg.scan_memory_one(search_code)
+    if ref != None or ref != 0:
+        return ref
+    else:
+        return 0
+    return 0
 
 if __name__ == "__main__":
     dbg = MyDebug()
     connect_flag = dbg.connect()
     print("连接状态: {}".format(connect_flag))
 
-    # 得到EIP位置
-    eip = dbg.get_register("eip")
-
-    # 反汇编前1000行
-    disasm_dict = dbg.get_disasm_code(eip,1000)
-
     # 搜索一个指令序列,用于快速查找构建漏洞利用代码
     SearchCode = [
-        ["push 0xC0000409", "call 0x003F1B38", "pop ecx"],
-        ["mov ebp, esp", "sub esp, 0x324"]
+        ["pop ecx", "pop ebp", "ret", "push ebp"],
+        ["push ebp", "mov ebp,esp"],
+        ["mov ecx, dword ptr ds:[eax+0x3C]", "add ecx, eax"]
     ]
 
     # 检索内存指令集
-    for item in range(0,len(SearchCode)):
+    for item in range(0, len(SearchCode)):
         Search = SearchCode[item]
-        # disasm_dict = 返回汇编指令 Search = 寻找指令集 1000 = 向下检索长度
-        ret = SearchOpCode(disasm_dict,Search,1000)
-        if ret != None:
-            print("指令集: {} --> 首次出现地址: {}".format(SearchCode[item],hex(ret)))
+        ret = SearchOpCode(dbg, Search)
+        print("所搜指令所在内存: {}".format(hex(ret)))
 
     dbg.close()
 ```
@@ -2471,13 +2603,29 @@ if __name__ == "__main__":
 
     dbg.delete_alloc(addr)
 ```
-封装上方代码，你就可以实现一个汇编指令获取工具了，如下`get_opcode_from_assemble()`函数。
+封装如上代码接口，实现`get_opcode_from_assemble()`用户传入汇编指令，得到该指令对应机器码。
 ```Python
 from LyScript32 import MyDebug
 
 # 传入汇编代码,得到对应机器码
 def get_opcode_from_assemble(dbg_ptr,asm):
-              pass
+    byte_code = bytearray()
+
+    addr = dbg_ptr.create_alloc(1024)
+    if addr != 0:
+        asm_size = dbg_ptr.assemble_code_size(asm)
+        # print("汇编代码占用字节: {}".format(asm_size))
+
+        write = dbg_ptr.assemble_write_memory(addr,asm)
+        if write == True:
+            for index in range(0,asm_size):
+                read = dbg_ptr.read_memory_byte(addr + index)
+                # print("{:02x} ".format(read),end="")
+                byte_code.append(read)
+        dbg_ptr.delete_alloc(addr)
+        return byte_code
+    else:
+        return bytearray(0)
 
 if __name__ == "__main__":
     dbg = MyDebug()
@@ -2497,6 +2645,73 @@ if __name__ == "__main__":
         for index in byte_array:
             print(hex(index),end="")
         print()
+
+    dbg.close()
+```
+
+**指令机器码内存搜索:** 在当前载入程序的所有模块中搜索特定的一组机器码指令，找到后返回该指令集内存地址。
+```Python
+from LyScript32 import MyDebug
+import time
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    # 需要搜索的指令集片段
+    opcode = ['ff 25','ff 55 fc','8b fe']
+
+    # 循环搜索指令集内存地址
+    for index,entry in zip(range(0,len(opcode)), dbg.get_all_module()):
+        eip = entry.get("entry")
+        base_name = entry.get("name")
+        if eip != 0:
+            dbg.set_register("eip",eip)
+            search_address = dbg.scan_memory_all(opcode[index])
+
+            if search_address != False:
+                print("搜索模块: {} --> 匹配个数: {} --> 机器码: {}"
+			.format(base_name,len(search_address),opcode[index]))
+                # 输出地址
+                for search_index in search_address:
+                    print("[*] {}".format(hex(search_index)))
+
+        time.sleep(0.3)
+    dbg.close()
+```
+
+**逐条进行反汇编输出:** 封装函数`disasm_code()`实现了通过循环的方式逐条输出反汇编代码完整信息，并打印到屏幕。
+```Python
+from LyScript32 import MyDebug
+
+# 封装反汇编多条函数
+def disasm_code(dbg_ptr, eip, count):
+    disasm_length = 0
+
+    for index in range(0, count):
+        # 获取一条反汇编代码
+        disasm_asm = dbg_ptr.get_disasm_one_code(eip + disasm_length)
+        disasm_addr = eip + disasm_length
+        disasm_size = dbg_ptr.assemble_code_size(disasm_asm)
+
+        print("内存地址: 0x{:08x} | 反汇编: {:35} | 长度: {}  | 机器码: "
+		.format(disasm_addr, disasm_asm, disasm_size),end="")
+
+        # 逐字节读入机器码
+        for length in range(0, disasm_size):
+            read = dbg_ptr.read_memory_byte(disasm_addr + length)
+            print("{:02x} ".format(read),end="")
+        print()
+
+        # 递增地址
+        disasm_length = disasm_length + disasm_size
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    dbg.connect()
+
+    eip = dbg.get_register("eip")
+    disasm_code(dbg, eip, 25)
 
     dbg.close()
 ```
@@ -2526,13 +2741,31 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
-如何执行函数呢？很简单，看以下代码是如何实现的，相信你能看懂，运行后会看到一个错误弹窗，说明程序执行流已经被转向了。
+封装实现`write_opcode_from_assemble()`函数，传入一个汇编指令列表，自动转为机器码并写出到堆内，控制EIP执行流实现劫持指令的目的。
 ```Python
 from LyScript32 import MyDebug
 
 # 传入汇编指令列表,直接将机器码写入对端内存
 def write_opcode_from_assemble(dbg_ptr,asm_list):
-              pass
+    addr_count = 0
+    addr = dbg_ptr.create_alloc(1024)
+    if addr != 0:
+        for index in asm_list:
+            asm_size = dbg_ptr.assemble_code_size(index)
+            if asm_size != 0:
+                # print("长度: {}".format(asm_size))
+                write = dbg_ptr.assemble_write_memory(addr + addr_count, index)
+                if write == True:
+                    addr_count = addr_count + asm_size
+                else:
+                    dbg_ptr.delete_alloc(addr)
+                    return 0
+            else:
+                dbg_ptr.delete_alloc(addr)
+                return 0
+    else:
+        return 0
+    return addr
 
 if __name__ == "__main__":
     dbg = MyDebug()
@@ -2556,9 +2789,9 @@ if __name__ == "__main__":
 
     # 执行代码
     dbg.set_debug("Run")
-
     dbg.close()
 ```
+执行劫持函数很简单，运行后会看到一个错误弹窗，说明程序执行流已经被转向了。
 
 **得到_PEB_LDR_DATA线程环境块:** 想要得到线程环境块最好的办法就是在目标内存中执行获取线程块的汇编指令，我们可以写出到内存并执行取值。
 ```Python
@@ -2591,6 +2824,103 @@ if __name__ == "__main__":
     # 设置EIP到堆首地址
     dbg.set_register("eip",heap_addres)
 
+    dbg.close()
+```
+
+**实现脱UPX压缩壳:** 将当前EIP停留在UPX壳的首地址处，执行如下脚本，将可以自动寻找到当前EIP的具体位置。
+```Python
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    # 初始化
+    dbg = MyDebug()
+
+    # 连接到调试器
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 检测套接字是否还在
+    ref = dbg.is_connect()
+    print("是否在连接: ", ref)
+
+    is_64 = False
+
+    # 判断是否时64位数
+    if is_64 == False:
+        currentIP = dbg.get_register("eip")
+
+        if dbg.read_memory_word(currentIP) != int(0xBE60):
+            print("[-] 可能不是UPX")
+            dbg.close()
+
+        patternAddr = dbg.scan_memory_one("83 EC ?? E9 ?? ?? ?? ?? 00")
+        print("匹配到的地址: {}".format(hex(patternAddr)))
+
+        dbg.set_breakpoint(patternAddr)
+        dbg.set_debug("Run")
+        dbg.set_debug("Wait")
+        dbg.delete_breakpoint(patternAddr)
+
+        dbg.set_debug("StepOver")
+        dbg.set_debug("StepOver")
+        print("[+] 程序OEP = 0x{:x}".format(dbg.get_register("eip")))
+
+    else:
+        currentIP = dbg.get_register("rip")
+
+        if dbg.read_memory_dword(currentIP) != int(0x55575653):
+            print("[-] 可能不是UPX")
+            dbg.close()
+
+        patternAddr = dbg.scan_memory_one("48 83 EC ?? E9")
+        print("匹配到的地址: {}".format(hex(patternAddr)))
+
+        dbg.set_breakpoint(patternAddr)
+        dbg.set_debug("Run")
+        dbg.set_debug("Wait")
+        dbg.delete_breakpoint(patternAddr)
+
+        dbg.set_debug("StepOver")
+        dbg.set_debug("StepOver")
+        print("[+] 程序OEP = 0x{:x}".format(dbg.get_register("eip")))
+
+    dbg.close()
+```
+
+**通过断点检测监视函数:** 通过运用`check_breakpoint()`断点检测函数，在断下后遍历堆栈，即可实现特定函数参数枚举。
+```Python
+import time
+from LyScript32 import MyDebug
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+
+    # 连接到调试器
+    connect_flag = dbg.connect()
+    dbg.is_connect()
+
+    # 获取函数内存地址
+    addr = dbg.get_module_from_function("user32.dll","MessageBoxA")
+
+    # 设置断点
+    dbg.set_breakpoint(addr)
+
+    # 循环监视
+    while True:
+        # 检查断点是否被命中
+        check = dbg.check_breakpoint(addr)
+        if check == True:
+            # 命中则取出堆栈参数
+            esp = dbg.get_register("esp")
+            arg4 = dbg.read_memory_dword(esp)
+            arg3 = dbg.read_memory_dword(esp + 4)
+            arg2 = dbg.read_memory_dword(esp + 8)
+            arg1 = dbg.read_memory_dword(esp + 12)
+            print("arg1 = {:x} arg2 = {:x} arg3 = {:x} arg4 = {:x}".
+                  format(arg1,arg2,arg3,arg4))
+
+            dbg.set_debug("Run")
+            time.sleep(1)
     dbg.close()
 ```
 
