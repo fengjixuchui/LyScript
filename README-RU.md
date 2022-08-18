@@ -2,9 +2,12 @@
 
 <br>
 <div align=center>
+	<img width="150" src="https://cdn.lyshark.com/archive/LyScript/lyscript_png.jpg" />
+<!--
   <img width="100" src="https://cdn.lyshark.com/archive/LyScript/bug_black.png"/><tr>
     <img width="100" src="https://cdn.lyshark.com/archive/LyScript/python.png"/>
- <br><br><br>
+-->
+ <br><br>
   
   [简体中文](README.md) | [ENGLISH](README-EN.md) | [русский язык ](README-RU.md)
 
@@ -21,7 +24,7 @@
 <br>
 
  - установить пакет Python ：`pip install LyScript32` или  `pip install LyScript64`
- - модуль загрузки：<a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript32.zip">LyScript32 (32bit)</a> or <a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript64.zip">LyScript64 (64bit)</a>
+ - модуль загрузки：<a href="https://github.com/lyshark/LyScript/releases/download/LyScript/LyScript32-1.0.13.zip">LyScript32-1.0.13 (32bit)</a> or <a href="https://github.com/lyshark/LyScript/releases/download/LyScript/LyScript64-1.0.13.zip">LyScript64-1.0.13 (64bit)</a>
 
 после загрузки модуля, пожалуйста, скопируйте этот модуль в каталог plugins x64dbg, который будет загружен автоматически после запуска программы. 
 
@@ -53,5 +56,6 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
+<br><br>
 
-русский язык не подходит 
+<b>русский язык не полный.  полный комментарий, пожалуйста, прочитайте в китайском варианте. </b>

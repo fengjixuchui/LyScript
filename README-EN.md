@@ -2,9 +2,12 @@
 
 <br>
 <div align=center>
+	<img width="150" src="https://cdn.lyshark.com/archive/LyScript/lyscript_png.jpg" />
+<!--
   <img width="100" src="https://cdn.lyshark.com/archive/LyScript/bug_black.png"/><tr>
     <img width="100" src="https://cdn.lyshark.com/archive/LyScript/python.png"/>
- <br><br><br>
+-->
+ <br><br>
   
   [简体中文](README.md) | [ENGLISH](README-EN.md) | [русский язык ](README-RU.md)
 
@@ -21,7 +24,7 @@ An x64dbg automation control plug-in, which controls x64dbg through python, real
 <br>
 
  - Install Python package：`pip install LyScript32` or `pip install LyScript64`
- - PluginDownload：<a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript32.zip">LyScript32 (32bit)</a> or <a href="https://github.com/lyshark/LyScript/raw/master/plugins/LyScript64.zip">LyScript64 (64bit)</a>
+ - PluginDownload：<a href="https://github.com/lyshark/LyScript/releases/download/LyScript/LyScript32-1.0.13.zip">LyScript32-1.0.13 (32bit)</a> or <a href="https://github.com/lyshark/LyScript/releases/download/LyScript/LyScript64-1.0.13.zip">LyScript64-1.0.13 (64bit)</a>
 
 After downloading the plug-in, please copy the plug-in to the plugins directory under the x64dbg directory, and the plug-in file will be loaded automatically after the program runs.
 
@@ -1099,3 +1102,7 @@ if __name__ == "__main__":
 
     dbg.close()
 ```
+
+<br><br>
+
+<b>The English version is not comprehensive. Please read the Chinese version for complete instructions.</b>

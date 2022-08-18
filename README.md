@@ -2,9 +2,12 @@
 
 <br>
 <div align=center>
+	<img width="150" src="https://cdn.lyshark.com/archive/LyScript/lyscript_png.jpg" />
+<!--
   <img width="100" src="https://cdn.lyshark.com/archive/LyScript/bug_black.png"/><tr>
     <img width="100" src="https://cdn.lyshark.com/archive/LyScript/python.png"/>
- <br><br><br>
+-->
+ <br><br>
   
   [简体中文](README.md) | [ENGLISH](README-EN.md) | [русский язык ](README-RU.md)
 
@@ -31,7 +34,7 @@ Python 包请安装与插件一致的版本，在cmd命令行下执行pip命令�
 
 插件下载好以后，请将该插件复制到x64dbg的plugins目录下，程序运行后会自动加载插件。
 
-![](https://img2022.cnblogs.com/blog/1379525/202203/1379525-20220327190905044-1815692787.png)
+![image](https://user-images.githubusercontent.com/52789403/185293618-68102ea6-8c37-493e-8be3-ca46eca0f0b5.png)
 
 当插件加载成功后，会在日志位置看到具体的绑定信息以及输出调试，该插件并不会在插件栏显示。
 
