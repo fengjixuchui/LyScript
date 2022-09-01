@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 from LyScript32 import MyDebug
 
 # 得到脚本返回值

@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 #coding: utf-8
 import binascii,os,sys
 from LyScript32 import MyDebug

@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 from LyScript32 import MyDebug
 
 # 有符号整数转无符号数
@@ -27,6 +33,8 @@ if __name__ == "__main__":
 
         # 使用转换
         print("默认有符号数: {:15} --> 转为无符号数: {:15} --> 转为有符号数: {:15}".
-              format(stack_address, long_to_ulong(stack_address),ulong_to_long(long_to_ulong(stack_address))))
+              format(stack_address, 
+	      long_to_ulong(stack_address),
+	      ulong_to_long(long_to_ulong(stack_address))))
 
     dbg.close()

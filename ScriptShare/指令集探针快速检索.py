@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 from LyScript32 import MyDebug
 
 # 将bytearray转为字符串
@@ -34,7 +40,8 @@ if __name__ == "__main__":
             search_address = dbg.scan_memory_all(opcode[index])
 
             if search_address != False:
-                print("指令: {} --> 模块: {} --> 个数: {}".format(search_asm[index],base_name,len(search_address)))
+                print("指令: {} --> 模块: {} --> 个数: {}".
+		format(search_asm[index],base_name,len(search_address)))
 
                 for search_index in search_address:
                     print("[*] {}".format(hex(search_index)))

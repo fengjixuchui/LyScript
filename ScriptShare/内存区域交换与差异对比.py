@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 from LyScript32 import MyDebug
 
 # 交换两个内存区域
@@ -44,6 +50,7 @@ if __name__ == "__main__":
     # 内存对比
     cmp_ref = memory_cmp(dbg, 12386320,12386352,4)
     for index in range(0,len(cmp_ref)):
-        print("地址: 0x{:08X} -> X: 0x{:02x} -> y: 0x{:02x}".format(cmp_ref[index].get("addr"),cmp_ref[index].get("x"),cmp_ref[index].get("y")))
+        print("地址: 0x{:08X} -> X: 0x{:02x} -> y: 0x{:02x}"
+		.format(cmp_ref[index].get("addr"),cmp_ref[index].get("x"),cmp_ref[index].get("y")))
 
     dbg.close()

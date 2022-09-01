@@ -1,26 +1,29 @@
-from LyScript32 import MyDebug
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
 
-# 传入汇编代码,得到对应机器码
-def get_opcode_from_assemble(dbg_ptr,asm):
-              pass
+from LyScript32 import MyDebug
 
 if __name__ == "__main__":
     dbg = MyDebug()
     connect_flag = dbg.connect()
     print("连接状态: {}".format(connect_flag))
 
-    # 获取汇编代码
-    byte_array = get_opcode_from_assemble(dbg,"xor eax,eax")
-    for index in byte_array:
-        print(hex(index),end="")
-    print()
+    addr = dbg.create_alloc(1024)
 
-    # 汇编一个序列
-    asm_list = ["xor eax,eax", "xor ebx,ebx", "mov eax,1"]
-    for index in asm_list:
-        byte_array = get_opcode_from_assemble(dbg, index)
-        for index in byte_array:
-            print(hex(index),end="")
-        print()
+    print("堆空间: {}".format(hex(addr)))
 
-    dbg.close()
+    asm_size = dbg.assemble_code_size("mov eax,1")
+    print("汇编代码占用字节: {}".format(asm_size))
+
+    write = dbg.assemble_write_memory(addr,"mov eax,1")
+
+    byte_code = bytearray()
+
+    for index in range(0,asm_size):
+        read = dbg.read_memory_byte(addr + index)
+        print("{:02x} ".format(read),end="")
+
+    dbg.delete_alloc(addr)

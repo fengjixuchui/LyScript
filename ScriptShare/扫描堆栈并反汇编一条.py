@@ -1,3 +1,9 @@
+# ----------------------------------------------
+# By: LyShark
+# Email: me@lyshark.com
+# Project: https://github.com/lyshark/LyScript
+# ----------------------------------------------
+
 from LyScript32 import MyDebug
 
 # 有符号整数转无符号数
@@ -34,6 +40,7 @@ if __name__ == "__main__":
         else:
             mod_base = dbg.get_base_from_address(long_to_ulong(stack_address))
 
-        print("stack => [{}] addr = {:10} base = {:10} dasm = {}".format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
+        print("stack => [{}] addr = {:10} base = {:10} dasm = {}".
+		format(index, hex(long_to_ulong(stack_address)),hex(mod_base), dasm))
 
     dbg.close()
