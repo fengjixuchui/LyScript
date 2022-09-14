@@ -2550,9 +2550,57 @@ if __name__ == "__main__":
 ```
 <br>
 
-### LyScriptUtils 转换工具包
+### LyPeUtils 工具包
 
-该工具包其目的是辅助LyScript插件实现进制与字符串或字节序列的快速转换，协助逆向工作者更好的反汇编，工具包默认支持32位与64位环境。
+该工具包用于辅助实现文件内PE结构的解析转换。
+
+ - 安装工具包: `pip install LyPeUtils`
+
+| 函数名 | 函数作用 |
+| ---- | ---- |
+| get_memory_base() | 得到自身程序基址 |
+| get_memory_size() | 得到自身程序大小 |
+| init_pe_module() |  设置模块,如果为空则设置自身 |
+| get_file_oep_va() | 得到文件OEP位置 |
+| get_memory_oep_va() | 得到内存OEP位置 |
+| get_offset_from_va(va_address) | 传入一个VA值获取到FOA文件地址 |
+| get_va_from_foa(foa_address)  | 传入一个FOA文件地址得到VA虚拟地址 |
+| get_rva_from_foa(foa_address) | 传入一个FOA文件地址转为RVA地址 |
+| get_file_section() | 获取文件节表 |
+| get_memory_section() |获取内存节表 |
+| get_memory_addr_from_section(section_name) | 获取内存特定节内节表 |
+| get_file_section_count() |得到文件节表数量 |
+| get_section_name_all() | 得到当前所有节名称 |
+|  get_hash_from_section(section_name)|得到特定节内存hash |
+| get_va_from_section(section_name) |得到特定节对应到虚拟内存中的地址 |
+| get_file_import() |  获取文件内导入表|
+| get_memory_import() | 获取内存内导入表 |
+
+这里给出简单的使用案例，如下所示用户传入文件偏移，得到对应到内存中的VA地址。
+```Python
+from LyScript32 import MyDebug
+from LyPeUtils import PE
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect = dbg.connect()
+
+    # 初始化PE
+    pe = PE(dbg)
+
+    # 初始化模块,默认设置主进程
+    flag = pe.init_pe_module()
+
+    va = pe.get_va_from_foa(0x123)
+    print("文件偏移转为VA是: {}".format(hex(va)))
+
+    dbg.close()
+```
+<br>
+
+### LyScriptUtils 工具包
+
+进制转换工具包，用于辅助`LyScript`插件实现进制与字符串或字节序列的快速转换，协助逆向工作者更好的反汇编，工具包默认支持32位与64位环境。
 
  - 安装进制转换工具包: `pip install LyScriptUtils`
 
@@ -2885,9 +2933,9 @@ if __name__ == '__main__':
 ```
 <br>
 
-### 官方API接口例程 [官方案例]
+### [官方教学案例]
 
-本人结合LyScript插件API函数实现的一些通用案例，用于演示插件内置方法是如何灵活组合运用的，其目的是让用户可以自行研究学习API函数的参数传递，并能够通过案例的学习快速掌握官方API函数的使用方法。
+本人结合LyScript插件API函数实现的一些通用案例，用于演示插件内置方法是如何灵活组合运用的，其目的是让用户可以自行研究学习API函数的参数传递，并能够通过案例的学习，能够快速掌握官方API函数的使用方法与技巧。
 
 **PEFile载入PE程序到内存:** 将PE可执行文件中的内存数据通过PEfile模块打开并读入内存，实现PE参数解析。
 ```Python
@@ -3600,7 +3648,12 @@ def disasm_code(dbg_ptr, eip, count):
         # 获取一条反汇编代码
         disasm_asm = dbg_ptr.get_disasm_one_code(eip + disasm_length)
         disasm_addr = eip + disasm_length
-        disasm_size = dbg_ptr.assemble_code_size(disasm_asm)
+
+        # 某些指令无法被计算出长度,此处可以添加直接跳过
+        if(disasm_asm == "push 0xC0000409"):
+            disasm_size = 5
+        else:
+            disasm_size = dbg_ptr.assemble_code_size(disasm_asm)
 
         print("内存地址: 0x{:08x} | 反汇编: {:35} | 长度: {}  | 机器码: "
 		.format(disasm_addr, disasm_asm, disasm_size),end="")
@@ -3619,7 +3672,7 @@ if __name__ == "__main__":
     dbg.connect()
 
     eip = dbg.get_register("eip")
-    disasm_code(dbg, eip, 25)
+    disasm_code(dbg, eip, 55)
 
     dbg.close()
 ```
@@ -5052,3 +5105,511 @@ if __name__ == "__main__":
 		  	dasm_memory_list[index].get("opcode"),dasm_file_list[index].get("opcode")))
     dbg.close()
 ```
+
+**通过PEB获取堆基址:** 堆基址的获取非常简单，我们只需要找到`peb+0x90`的位置，将其读取出来即可。
+```Python
+from LyScript32 import MyDebug
+
+# 获取模块基址
+def getKernelModuleBase(dbg):
+    # 内置函数得到进程PEB
+    local_pid = dbg.get_process_id()
+    peb = dbg.get_peb_address(local_pid)
+    # print("进程PEB: {}".format(hex(peb)))
+
+    # esi = PEB_LDR_DATA结构体的地址
+    ptr = peb + 0x0c
+
+    # 读取内存指针
+    PEB_LDR_DATA = dbg.read_memory_ptr(ptr)
+    # print("读入PEB_LDR_DATA里面的地址: {}".format(hex(PEB_LDR_DATA)))
+
+    # esi = 模块链表指针InInitializationOrderModuleList
+    ptr = PEB_LDR_DATA + 0x1c
+    InInitializationOrderModuleList = dbg.read_memory_ptr(ptr)
+    # print("读入InInitializationOrderModuleList里面的地址: {}".
+    # format(hex(InInitializationOrderModuleList)))
+
+    # 取出kernel32.dll模块基址
+    ptr = InInitializationOrderModuleList + 0x08
+    modbase = dbg.read_memory_ptr(ptr)
+    # print("kernel32.dll = {}".format(hex(modbase)))
+    return modbase
+
+# 获取进程堆基址
+def getHeapsAddress(dbg):
+    # 内置函数得到进程PEB
+    local_pid = dbg.get_process_id()
+    peb = dbg.get_peb_address(local_pid)
+    # print("进程PEB: {}".format(hex(peb)))
+
+    # 读取堆分配地址
+    ptr = peb + 0x90
+    peb_address = dbg.read_memory_ptr(ptr)
+    # print("读取堆分配: {}".format(hex(peb_address)))
+
+    heap_address = dbg.read_memory_ptr(peb_address)
+    # print("当前进程堆基址: {}".format(hex(heap_address)))
+    return heap_address
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    conn = dbg.connect()
+
+    k32 = getKernelModuleBase(dbg)
+    print("kernel32 = {}".format(hex(k32)))
+
+    heap = getHeapsAddress(dbg)
+    print("heap 堆地址: {}".format(hex(heap)))
+
+    dbg.close()
+```
+
+**汇编Hook替换弹窗内容:** 通过钩子劫持技术，实现用户点击弹窗后，弹出我们自己的版权信息。
+```Python
+from LyScript32 import MyDebug
+
+# 传入汇编列表,写出到内存
+def assemble(dbg, address=0, asm_list=[]):
+    asm_len_count = 0
+    for index in range(0,len(asm_list)):
+        # 写出到内存
+        dbg.assemble_at(address, asm_list[index])
+        # print("地址: {} --> 长度计数器: {} --> 写出: {}".
+	# format(hex(address + asm_len_count), asm_len_count,asm_list[index]))
+        # 得到asm长度
+        asm_len_count = dbg.assemble_code_size(asm_list[index])
+        # 地址每次递增
+        address = address + asm_len_count
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect_flag = dbg.connect()
+    print("连接状态: {}".format(connect_flag))
+
+    # 找到MessageBoxA
+    messagebox_address = dbg.get_module_from_function("user32.dll","MessageBoxA")
+    print("MessageBoxA内存地址 = {}".format(hex(messagebox_address)))
+
+    # 分配空间
+    HookMem = dbg.create_alloc(1024)
+    print("自定义内存空间: {}".format(hex(HookMem)))
+
+    # 写出FindWindowA内存地址,跳转地址
+    asm = [
+        f"push {hex(HookMem)}",
+        "ret"
+    ]
+
+    # 将列表中的汇编指令写出到内存
+    assemble(dbg,messagebox_address,asm)
+
+    # 定义两个变量,存放字符串
+    MsgBoxAddr = dbg.create_alloc(512)
+    MsgTextAddr = dbg.create_alloc(512)
+
+    # 填充字符串内容
+    # lyshark 标题
+    txt = [0x6c, 0x79, 0x73, 0x68, 0x61, 0x72, 0x6b]
+    # 内容 lyshark.com
+    box = [0x6C, 0x79, 0x73, 0x68, 0x61, 0x72, 0x6B, 0x2E, 0x63, 0x6F, 0x6D]
+
+    for txt_count in range(0,len(txt)):
+        dbg.write_memory_byte(MsgBoxAddr + txt_count, txt[txt_count])
+
+    for box_count in range(0,len(box)):
+        dbg.write_memory_byte(MsgTextAddr + box_count, box[box_count])
+
+    print("标题地址: {} 内容: {}".format(hex(MsgBoxAddr),hex(MsgTextAddr)))
+
+    # 此处是MessageBox替换后的片段
+    PatchCode =\
+    [
+        "mov edi, edi",
+        "push ebp",
+        "mov ebp,esp",
+        "push -1",
+        "push 0",
+        "push dword ptr ss:[ebp+0x14]",
+        f"push {hex(MsgBoxAddr)}",
+        f"push {hex(MsgTextAddr)}",
+        "push dword ptr ss:[ebp+0x8]",
+        "call 0x76030E20",
+        "pop ebp",
+        "ret 0x10"
+    ]
+
+    # 写出到自定义内存
+    assemble(dbg, HookMem, PatchCode)
+
+    print("地址已被替换,可以运行了.")
+    dbg.set_debug("Run")
+    dbg.set_debug("Run")
+
+    dbg.close()
+```
+
+**计算HASH并生成报告:** 通过运用第三方库`xlsxwriter`实现读入指定内存片段生成`hash`特征，并写出成EXCEL表格。
+```Python
+import hashlib
+import time
+import zlib,binascii
+from LyScript32 import MyDebug
+import xlsxwriter
+
+# 计算哈希
+def calc_hash(dbg, rva,size):
+    read_list = bytearray()
+    ref_hash = { "va": None, "size": None, "md5":None, "sha256":None, "sha512":None, "crc32":None }
+
+    # 得到基地址
+    base = dbg.get_local_module_base()
+
+    # 读入数据
+    for index in range(0,size):
+        readbyte = dbg.read_memory_byte(base + rva + index)
+        read_list.append(readbyte)
+
+    # 计算特征
+    md5hash = hashlib.md5(read_list)
+    sha512hash = hashlib.sha512(read_list)
+    sha256hash = hashlib.sha256(read_list)
+    # crc32hash = binascii.crc32(read_list) & 0xffffffff
+
+    ref_hash["va"] = hex(base+rva)
+    ref_hash["size"] = size
+    ref_hash["md5"] = md5hash.hexdigest()
+    ref_hash["sha256"] = sha256hash.hexdigest()
+    ref_hash["sha512"] = sha512hash.hexdigest()
+    ref_hash["crc32"] = hex(zlib.crc32(read_list))
+    return ref_hash
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect = dbg.connect()
+
+    # 打开一个被调试进程
+    dbg.open_debug("D:\\Win32Project.exe")
+
+    # 传入相对地址,计算计算字节
+    ref = calc_hash(dbg,0x19fd,10)
+    print(ref)
+
+    ref2 = calc_hash(dbg,0x1030,26)
+    print(ref2)
+
+    ref3 = calc_hash(dbg,0x15EB,46)
+    print(ref3)
+
+    ref4 = calc_hash(dbg,0x172B,8)
+    print(ref4)
+
+    # 写出表格
+    workbook = xlsxwriter.Workbook("pe_hash.xlsx")
+    worksheet = workbook.add_worksheet()
+
+    headings = ["VA地址", "计算长度", "MD5", "SHA256", "SHA512","CRC32"]
+    data = [
+        [ref.get("va"),ref.get("size"),ref.get("md5"),
+	ref.get("sha256"),ref.get("sha512"),ref.get("crc32")],
+        [ref2.get("va"), ref2.get("size"), ref2.get("md5"),
+	ref2.get("sha256"), ref2.get("sha512"), ref2.get("crc32")],
+        [ref3.get("va"), ref3.get("size"), ref3.get("md5"),
+	ref3.get("sha256"), ref3.get("sha512"), ref3.get("crc32")],
+        [ref4.get("va"), ref4.get("size"), ref4.get("md5"),
+	ref4.get("sha256"), ref4.get("sha512"), ref4.get("crc32")]
+    ]
+
+    # 定义表格样式
+    head_style = workbook.add_format({"bold": True, "align": "center", "fg_color": "#D7E4BC"})
+    worksheet.set_column("A1:F1", 15)
+
+    # 逐条写入数据
+    worksheet.write_row("A1", headings, head_style)
+    for i in range(0, len(data)):
+        worksheet.write_row("A{}".format(i + 2), data[i])
+
+    # 添加条形图，显示前十个元素
+    chart = workbook.add_chart({"type": "line"})
+    chart.add_series({
+        "name": "=Sheet1!$B$1",              # 图例项
+        "categories": "=Sheet1!$A$2:$A$10",  # X轴 Item名称
+        "values": "=Sheet1!$B$2:$B$10"       # X轴Item值
+    })
+    chart.add_series({
+        "name": "=Sheet1!$C$1",
+        "categories": "=Sheet1!$A$2:$A$10",
+        "values": "=Sheet1!$C$2:$C$10"
+    })
+    chart.add_series({
+        "name": "=Sheet1!$D$1",
+        "categories": "=Sheet1!$A$2:$A$10",
+        "values": "=Sheet1!$D$2:$D$10"
+    })
+
+    # 添加柱状图标题
+    chart.set_title({"name": "计算HASH统计图"})
+    # chart.set_style(8)
+
+    chart.set_size({'width': 500, 'height': 250})
+    chart.set_legend({'position': 'top'})
+
+    # 在F2处绘制
+    worksheet.insert_chart("H2", chart)
+    workbook.close()
+
+    # 关闭被调试进程
+    time.sleep(1)
+    dbg.close_debug()
+    dbg.close()
+```
+
+**通过PEB结构解析堆内存段:** 当我们得到了堆的起始地址以后，那么对堆地址进行深度解析就变得很容易了，只需要填充特定的结构体即可并格式化即可，如下首先实现解析堆内段这个功能。
+```Python
+from LyScript32 import MyDebug
+import struct
+import string
+
+DEBUG = False
+
+class _PEB():
+    def __init__(self, dbg):
+        # 内置函数得到进程PEB
+        self.base = dbg.get_peb_address(dbg.get_process_id())
+        self.PEB = bytearray()
+
+        # 填充前488字节
+        for index in range(0, 488):
+            readbyte = dbg.read_memory_byte(self.base + index)
+            self.PEB.append(readbyte)
+
+        index = 0x018
+        self.ProcessHeap = self.PEB[index:index + 4]
+
+    def get_ProcessHeaps(self):
+        pack = struct.unpack('<L', bytes(self.ProcessHeap))
+        return pack[0]
+
+class GrabHeap():
+    def __init__(self, dbg, heap_addr):
+        # 内置函数得到进程PEB
+        self.base = dbg.get_peb_address(dbg.get_process_id())
+        self.address = heap_addr
+        self.buffer = bytearray()
+
+    def grapHeap(self):
+        for idx in range(0, 1416):
+            readbyte = dbg.read_memory_byte(self.address + idx)
+            self.buffer.append(readbyte)
+
+        index = 0x8
+        (self.Signature, self.Flags, self.ForceFlags, self.VirtualMemoryThreshold, \
+         self.SegmentReserve, self.SegmentCommit, self.DeCommitFreeBlockThreshold, \
+	 self.DeCommitTotalBlockThreshold, \
+         self.TotalFreeSize, self.MaximumAllocationSize, self.ProcessHeapListIndex, \
+	 self.HeaderValidateLength, \
+         self.HeaderValidateCopy, self.NextAvailableTagIndex, self.MaximumTagIndex, self.TagEntries, \
+         self.UCRSegments, self.UnusedUnCommittedRanges, self.AlignRound, self.AlignMask) = \
+            struct.unpack("LLLLLLLLLLHHLHHLLLLL", self.buffer[index:index + (0x50 - 8)])
+
+        index += 0x50 - 8
+        self.VirtualAllocedBlock = struct.unpack("LL", self.buffer[index:index + 8])
+
+        index += 8
+        self._Segments = struct.unpack("L" * 64, self.buffer[index:index + 64 * 4])
+        index += 64 * 4
+        self.FreeListInUseLong = struct.unpack("LLLL", self.buffer[index:index + 16])
+        index += 16
+        (self.FreeListInUseTerminate, self.AllocatorBackTraceIndex) = \
+	struct.unpack("HH", self.buffer[index: index + 4])
+        index += 4
+        (self.Reserved1, self.LargeBlocksIndex) = struct.unpack("LL", self.buffer[index: index + 8])
+
+    def get_Signature(self):
+        return self.Signature
+
+# 段
+class Segment():
+    def __init__(self, dbg, heap_addr):
+        self.address = heap_addr
+        self.buffer = bytearray()
+
+        # AVOID THE ENTRY ITSELF
+        self.address += 8
+        for idx in range(0, 0x34):
+            readbyte = dbg.read_memory_byte(self.address + idx)
+            self.buffer.append(readbyte)
+
+        (self.Signature, self.Flags, self.Heap, self.LargestUnCommitedRange, self.BaseAddress, \
+         self.NumberOfPages, self.FirstEntry, self.LastValidEntry, self.NumberOfUnCommittedPages, \
+         self.NumberOfUnCommittedRanges, self.UnCommittedRanges, self.AllocatorBackTraceIndex, \
+         self.Reserved, self.LastEntryInSegment) = struct.unpack("LLLLLLLLLLLHHL", self.buffer)
+
+        if DEBUG == True:
+            print("SEGMENT: {} Sig: {}".format(hex(self.address), hex(self.Signature)))
+
+            print("Heap: {} LargetUncommit {} Base: {}"
+                  .format(hex(self.Heap), hex(self.LargestUnCommitedRange), hex(self.BaseAddress)))
+
+            print("NumberOfPages {} FirstEntry: {} LastValid: {}"
+                  .format(hex(self.NumberOfPages), hex(self.FirstEntry), hex(self.LastValidEntry)))
+
+            print("Uncommited: {}".format(self.UnCommittedRanges))
+
+            Pages = []
+            Items = bytearray()
+            if self.UnCommittedRanges:
+                addr = self.UnCommittedRanges
+                if addr != 0:
+                    # 读入内存
+                    for idx in range(0, 0x10):
+                        readbyte = dbg.read_memory_byte(self.address + idx)
+                        Items.append(readbyte)
+
+                    (C_Next, C_Addr, C_Size, C_Filler) = struct.unpack("LLLL", Items)
+                    print("Memory: {} Address: {} (a: {}) Size: {}"
+                          .format(hex(self.address), hex(C_Next), C_Addr, C_Size))
+                    Pages.append(C_Addr + C_Size)
+                    addr = C_Next
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect = dbg.connect()
+
+    # 初始化PEB填充结构
+    peb = _PEB(dbg)
+
+    # 堆地址
+    process_heap = peb.get_ProcessHeaps()
+    print("堆地址: {}".format(hex(process_heap)))
+
+    # 定义Segment
+    heap = Segment(dbg, process_heap)
+
+    # 输出内容
+    print("Signature = {}".format(heap.Signature))
+    print("Flags = {}".format(heap.Flags))
+    print("Heap = {}".format(heap.Heap))
+
+    # 初始化堆
+    heap = GrabHeap(dbg, process_heap)
+    heap.grapHeap()
+
+    # 获取Signature
+    Signature = heap.get_Signature()
+    print("Signature = {}".format(hex(Signature)))
+
+    dbg.close()
+```
+
+**通过PEB结构解析低内存堆:** 低内存堆的输出也可以使用如上方法实现，只是在输出是需要解析的结构体程序稍多一些，但总体上原理与上方代码一致。
+```Python
+from LyScript32 import MyDebug
+import struct
+import string
+
+# 读内存
+def readMemory(address,size):
+    ref_buffer = bytearray()
+    for idx in range(0, size):
+        readbyte = dbg.read_memory_byte(address + idx)
+        ref_buffer.append(readbyte)
+    return ref_buffer
+
+def readLong(address):
+    return dbg.read_memory_dword(address)
+
+# 得到进程PEB
+class _PEB():
+    def __init__(self, dbg):
+        # 内置函数得到进程PEB
+        self.base = dbg.get_peb_address(dbg.get_process_id())
+        self.PEB = bytearray()
+        self.PEB = readMemory(self.base,488)
+
+        # 通过偏移找到ProcessHeap
+        index = 0x018
+        self.ProcessHeap = self.PEB[index:index + 4]
+
+    def get_ProcessHeaps(self):
+        pack = struct.unpack('<L', bytes(self.ProcessHeap))
+        return pack[0]
+
+class UserMemoryCache():
+    def __init__(self, addr, mem):
+        self.address = addr
+        (self.Next, self.Depth, self.Sequence, self.AvailableBlocks,\
+         self.Reserved) = struct.unpack("LHHLL", mem[ 0 : 16 ])
+
+class Bucket():
+    def __init__(self, addr, mem):
+        self.address = addr
+        (self.BlockUnits, self.SizeIndex, Flag) =\
+         struct.unpack("HBB", mem[:4])
+
+        # 从理论上讲，这是标志的分离方式
+        self.UseAffinity = Flag & 0x1
+        self.DebugFlags  = (Flag >1) & 0x3
+
+# 低内存堆
+class LFHeap():
+    def __init__(self, addr):
+        mem = readMemory(addr, 0x300)
+        index = 0
+        self.address = addr
+
+        (self.Lock, self.field_4, self.field_8, self.field_c,\
+         self.field_10, field_14, self.SubSegmentZone_Flink,
+         self.SubSegmentZone_Blink, self.ZoneBlockSize,\
+         self.Heap, self.SegmentChange, self.SegmentCreate,\
+         self.SegmentInsertInFree, self.SegmentDelete, self.CacheAllocs,\
+         self.CacheFrees) = struct.unpack("L" * 0x10, mem[index:index+0x40])
+
+        index += 0x40
+        self.UserBlockCache = []
+        for a in range(0,12):
+            umc = UserMemoryCache(addr + index, mem[index:index + 0x10])
+            index += 0x10
+            self.UserBlockCache.append(umc)
+
+        self.Buckets = []
+        for a in range(0, 128):
+            entry = mem[index: index + 4]
+            b = Bucket(addr + index, entry)
+            index = index + 4
+            self.Buckets.append(b)
+
+if __name__ == "__main__":
+    dbg = MyDebug()
+    connect = dbg.connect()
+
+    # 初始化PEB填充结构
+    peb = _PEB(dbg)
+
+    # 堆地址
+    process_heap = peb.get_ProcessHeaps()
+    print("堆地址: {}".format(hex(process_heap)))
+
+    # 定义低内存堆类
+    lf_heap = LFHeap(process_heap)
+
+    print("堆内存锁: {}".format(hex(lf_heap.Lock)))
+    print("堆地址: {}".format(hex(lf_heap.Heap)))
+    print("堆分配: {}".format(hex(lf_heap.CacheAllocs)))
+
+    # 循环输出block
+    for index in lf_heap.UserBlockCache:
+        print("地址: {} --> 下一个地址: {}".format(hex(index.address),hex(index.Next)))
+
+    for index in lf_heap.Buckets:
+        print(index.SizeIndex,index.DebugFlags)
+
+    dbg.close()
+```
+
+
+
+
+
+
+
