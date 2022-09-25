@@ -3,13 +3,9 @@
 <br>
 <div align=center>
 	<img width="150" src="https://cdn.lyshark.com/archive/LyScript/lyscript_png.jpg" />
-<!--
-  <img width="100" src="https://cdn.lyshark.com/archive/LyScript/bug_black.png"/><tr>
-    <img width="100" src="https://cdn.lyshark.com/archive/LyScript/python.png"/>
--->
  <br><br>
   
-  [简体中文](README.md) | [ENGLISH](README-EN.md) | [русский язык ](README-RU.md)
+  [简体中文](README.md) | [繁體中文(中國)](README-TC.md) | [ENGLISH](README-EN.md) | [русский язык ](README-RU.md)
 
   <br>
   
@@ -2934,7 +2930,7 @@ if __name__ == '__main__':
 ```
 <br>
 
-### [官方教学案例]
+## [官方API应用案例]
 
 本人结合LyScript插件API函数实现的一些通用案例，用于演示插件内置方法是如何灵活组合运用的，其目的是让用户可以自行研究学习API函数的参数传递，并能够通过案例的学习，能够快速掌握官方API函数的使用方法与技巧。
 
